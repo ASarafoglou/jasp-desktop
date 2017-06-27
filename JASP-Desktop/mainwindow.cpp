@@ -52,6 +52,7 @@
 #include "analysisforms/contingencytablesbayesianform.h"
 
 #include "analysisforms/binomialtestform.h"
+#include "analysisforms/multinomialtestform.h"
 #include "analysisforms/binomialtestbayesianform.h"
 #include "analysisforms/bffromtform.h"
 #include "analysisforms/SummaryStatistics/summarystatsttestbayesianindependentsamplesform.h"
@@ -232,6 +233,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(this, SIGNAL(updateUserData(int, QString)), this, SLOT(updateUserDataHandler(int, QString)));
 	connect(this, SIGNAL(simulatedMouseClick(int, int, int)), this, SLOT(simulatedMouseClickHandler(int, int, int)));
 	connect(this, SIGNAL(resultsDocumentChanged()), this, SLOT(resultsDocumentChangedHandler()));
+	connect(ui->tabBar, SIGNAL(setExactPValuesHandler(bool)), this, SLOT(setExactPValuesHandler(bool)));
 
 #ifdef __APPLE__
 	_scrollbarWidth = 3;
@@ -714,6 +716,8 @@ AnalysisForm* MainWindow::loadForm(const string name)
 		form = new R11tLearnForm(contentArea);
 	else if (name == "BinomialTest")
 		form = new BinomialTestForm(contentArea);
+	else if (name == "MultinomialTest")
+		form = new MultinomialTestForm(contentArea);
 	else if (name == "BinomialTestBayesian")
 		form = new BinomialTestBayesianForm(contentArea);
 	else if (name == "BFFromT")
@@ -1262,6 +1266,8 @@ void MainWindow::resultsPageLoaded(bool success)
 		QString version = tq(AppInfo::version.asString());
 		ui->webViewResults->page()->mainFrame()->evaluateJavaScript("window.setAppVersion('" + version + "')");
 
+		setExactPValuesHandler(_settings.value("exactPVals", 0).toBool());
+
 		QVariant ppiv = ui->webViewResults->page()->mainFrame()->evaluateJavaScript("window.getPPI()");
 
 		bool success;
@@ -1343,6 +1349,13 @@ void MainWindow::requestHelpPage(const QString &pageName)
 	QString js = "window.render(\"" + content + "\")";
 
 	ui->webViewHelp->page()->mainFrame()->evaluateJavaScript(js);
+}
+
+void MainWindow::setExactPValuesHandler(bool exactPValues)
+{
+	QString exactPValueString = (exactPValues ? "true" : "false");
+	QString js = "window.globSet.pExact = " + exactPValueString + "; window.reRenderAnalyses();";
+	ui->webViewResults->page()->mainFrame()->evaluateJavaScript(js);
 }
 
 void MainWindow::itemSelected(const QString &item)
