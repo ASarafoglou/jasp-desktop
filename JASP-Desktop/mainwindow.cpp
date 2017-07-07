@@ -53,6 +53,7 @@
 
 #include "analysisforms/binomialtestform.h"
 #include "analysisforms/multinomialtestform.h"
+#include "analysisforms/multinomialtestbayesianform.h"
 #include "analysisforms/binomialtestbayesianform.h"
 #include "analysisforms/bffromtform.h"
 #include "analysisforms/SummaryStatistics/summarystatsttestbayesianindependentsamplesform.h"
@@ -718,6 +719,8 @@ AnalysisForm* MainWindow::loadForm(const string name)
 		form = new BinomialTestForm(contentArea);
 	else if (name == "MultinomialTest")
 		form = new MultinomialTestForm(contentArea);
+    else if (name == "MultinomialTestBayesian")
+        form = new MultinomialTestBayesianForm(contentArea);
 	else if (name == "BinomialTestBayesian")
 		form = new BinomialTestBayesianForm(contentArea);
 	else if (name == "BFFromT")
