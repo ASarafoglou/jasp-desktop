@@ -17,8 +17,8 @@
     },
     {
       "name": "hypothesis",
-      "options": [ "multinomialTest", "expectedProbs" ],
-      "default": "multinomialTest",
+      "options": [ "equalProbs", "expectedProbs", "orderRestricts" ],
+      "default": "equalProbs",
       "type": "List"
     },
     {
@@ -27,23 +27,6 @@
       "default": "descCounts",
       "type": "List"
     },
-		{
-			"name": "descriptives",
-			"type": "Boolean",
-			"default": false
-		},
-    {
-			"name": "confidenceInterval",
-			"type": "Boolean"
-		},
-		{
-			"format": "%",
-			"max": 0.999,
-			"min": 0.001,
-			"name": "confidenceIntervalInterval",
-			"type": "Number",
-			"value": 0.950
-		},
 		{
 			"name": "descriptivesPlot",
 			"type": "Boolean"
@@ -57,9 +40,33 @@
 			"value": 0.950
 		},
 		{
-		  "name": "VovkSellkeMPR",
-		  "type": "Boolean",
-		  "default": false
+			"default": false,
+			"name": "plotPriorAndPosterior",
+			"type": "Boolean"
+		},
+		{
+			"default": false,
+			"name": "plotPriorAndPosteriorAdditionalInfo",
+			"type": "Boolean"
+		},
+		{
+			"default": false,
+			"name": "summaryPlot",
+			"type": "Boolean"
+		},
+		{
+			"format": "%",
+			"max": 0.999,
+			"min": 0.000,
+			"name": "summaryPlotCredibleInterval",
+			"type": "Number",
+			"value": 0.950
+		},
+		{
+			"name": "bayesFactorType",
+			"options": [ "BF10", "BF01", "LogBF10" ],
+			"default": "BF10",
+			"type": "List"
 		},
 		{
 			"name": "plotWidth",
