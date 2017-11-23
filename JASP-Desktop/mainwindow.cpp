@@ -391,7 +391,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
 	{
 		event->accept();
 	}
-	
+
 	PreferencesDialog *rd = ui->tabBar->getPreferencesDialog();
 	if (rd) rd->close();
 }
@@ -775,8 +775,8 @@ AnalysisForm* MainWindow::loadForm(const string name)
 		form = new BinomialTestForm(contentArea);
 	else if (name == "MultinomialTest")
 		form = new MultinomialTestForm(contentArea);
-    else if (name == "MultinomialTestBayesian")
-        form = new MultinomialTestBayesianForm(contentArea);
+  else if (name == "MultinomialTestBayesian")
+      form = new MultinomialTestBayesianForm(contentArea);
 	else if (name == "BinomialTestBayesian")
 		form = new BinomialTestBayesianForm(contentArea);
 	else if (name == "ReliabilityAnalysis")
