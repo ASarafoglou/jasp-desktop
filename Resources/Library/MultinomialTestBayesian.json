@@ -1,0 +1,82 @@
+{
+	"name": "MultinomialTest",
+	"autorun": true,
+	"version": "1.00",
+	"options": [
+    {
+      "name": "factor",
+      "type": "Variable"
+    },
+    {
+      "name": "counts",
+      "type": "Variable"
+    },
+    {
+      "name": "exProbVar",
+      "type": "Variable"
+    },
+    {
+      "name": "hypothesis",
+      "options": [ "equalProbs", "expectedProbs", "orderRestricts" ],
+      "default": "equalProbs",
+      "type": "List"
+    },
+    {
+      "name": "countProp",
+      "options": [ "descCounts", "descProps" ],
+      "default": "descCounts",
+      "type": "List"
+    },
+		{
+			"name": "descriptivesPlot",
+			"type": "Boolean"
+		},
+		{
+			"format": "%",
+			"max": 0.999,
+			"min": 0.001,
+			"name": "descriptivesPlotConfidenceInterval",
+			"type": "Number",
+			"value": 0.950
+		},
+		{
+			"default": false,
+			"name": "plotPriorAndPosterior",
+			"type": "Boolean"
+		},
+		{
+			"default": false,
+			"name": "plotPriorAndPosteriorAdditionalInfo",
+			"type": "Boolean"
+		},
+		{
+			"default": false,
+			"name": "summaryPlot",
+			"type": "Boolean"
+		},
+		{
+			"format": "%",
+			"max": 0.999,
+			"min": 0.000,
+			"name": "summaryPlotCredibleInterval",
+			"type": "Number",
+			"value": 0.950
+		},
+		{
+			"name": "bayesFactorType",
+			"options": [ "BF10", "BF01", "LogBF10" ],
+			"default": "BF10",
+			"type": "List"
+		},
+		{
+			"name": "plotWidth",
+			"type": "Integer",
+			"default": 450
+		},
+		{
+			"name": "plotHeight",
+			"type": "Integer",
+			"default": 300
+		}
+  ]
+}

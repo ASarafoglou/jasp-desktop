@@ -38,6 +38,8 @@
 #include "analysisforms/Common/correlationpartialform.h"
 #include "analysisforms/Common/descriptivesform.h"
 #include "analysisforms/Common/exploratoryfactoranalysisform.h"
+#include "analysisforms/Common/multinomialtestform.h"
+#include "analysisforms/Common/multinomialtestbayesianform.h"
 #include "analysisforms/Common/principalcomponentanalysisform.h"
 #include "analysisforms/Common/regressionlinearbayesianform.h"
 #include "analysisforms/Common/regressionlinearform.h"
@@ -51,6 +53,7 @@
 #include "analysisforms/Common/ttestindependentsamplesform.h"
 #include "analysisforms/Common/ttestonesampleform.h"
 #include "analysisforms/Common/ttestpairedsamplesform.h"
+
 #ifdef QT_DEBUG
 #include "analysisforms/Common/basregressionlinearlinkform.h"
 #endif
@@ -772,6 +775,8 @@ AnalysisForm* MainWindow::loadForm(const string name)
 		form = new BinomialTestForm(contentArea);
 	else if (name == "MultinomialTest")
 		form = new MultinomialTestForm(contentArea);
+    else if (name == "MultinomialTestBayesian")
+        form = new MultinomialTestBayesianForm(contentArea);
 	else if (name == "BinomialTestBayesian")
 		form = new BinomialTestBayesianForm(contentArea);
 	else if (name == "ReliabilityAnalysis")
