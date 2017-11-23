@@ -44,9 +44,11 @@
 				"name": "Frequencies",
 				"analyses": [
 					"Binomial Test",
+					"Multinomial Test",
 					"Contingency Tables",
 					"Log-Linear Regression",
 					"Bayesian Binomial Test",
+					"Bayesian Multinomial Test"
 					"Bayesian Contingency Tables",
 					"Bayesian Log-Linear Regression"
 				]
