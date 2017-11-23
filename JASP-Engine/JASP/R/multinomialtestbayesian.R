@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-MultinomialTest <- function(dataset = NULL, options, perform = "run",
+MultinomialTestBayesian <- function(dataset = NULL, options, perform = "run",
                callback = function(...) 0,  ...) {
 
   # First, we load the variables into the R environment
@@ -53,10 +53,11 @@ MultinomialTest <- function(dataset = NULL, options, perform = "run",
   # Then, we retrieve the state and initialise the output objects
   state <- .retrieveState()
 
-  chisqResults <- NULL # result of the chi-square test
-  chisqTable <- NULL # chi-square table
-  descriptivesTable <- NULL # expected versus observed
-  descriptivesPlot <- NULL # barplot of factor levels
+  bayesMultResults <- NULL # result of the Bayesian multinomial test
+  bayesMultTable <- NULL # chi-square table
+  bayesDescriptivesTable <- NULL # expected versus observed
+  bayesDescriptivesPlot <- NULL # barplot of factor levels
+  bayesResultsPlot <- NULL # posterior estimates and CI
 
 
   # Then, we can fill the output objects with old info if its option did not
@@ -67,22 +68,22 @@ MultinomialTest <- function(dataset = NULL, options, perform = "run",
     if (is.list(diff)){
 
       if (!any(diff[["factor"]], diff[["counts"]],
-               diff[["confidenceIntervalInterval"]],
+               diff[["credibleIntervalInterval"]],
                diff[["hypothesis"]], diff[["exProbVar"]],
                diff[["expectedProbs"]])){
 
-        chisqResults <- state[["chisqResults"]]
+        bayesMultResults <- state[["bayesMultResults"]]
 
-        # the following depend on chisqResults so in same if statement
-        if (!any(diff[["confidenceInterval"]],
+        # the following depend on bayesMultResults so in same if statement
+        if (!any(diff[["credibleInterval"]],
                  diff[["countProp"]])) {
-          descriptivesTable <- state[["descriptivesTable"]]
+          bayesDescriptivesTable <- state[["bayesDescriptivesTable"]]
         }
 
-        if (!any(diff[["descriptivesPlotConfidenceInterval"]],
+        if (!any(diff[["bayesDescriptivesPlotcredibleInterval"]],
                  diff[["countProp"]], diff[["plotWidth"]],
                  diff[["plotHeight"]])) {
-          descriptivesPlot <- state[["descriptivesPlot"]]
+          bayesDescriptivesPlot <- state[["bayesDescriptivesPlot"]]
         }
 
       }
@@ -94,49 +95,49 @@ MultinomialTest <- function(dataset = NULL, options, perform = "run",
   }
 
   # Meta information
-  results[["title"]] <- "Multinomial Test"
-  results[[".meta"]] <- list(list(name = "chisq", type = "table"),
-                             list(name = "descriptivesTable", type = "table"),
-                             list(name = "descriptivesPlot", type = "image"))
+  results[["title"]] <- "Bayesian Multinomial Test"
+  results[[".meta"]] <- list(list(name = "bayesMult", type = "table"),
+                             list(name = "bayesDescriptivesTable", type = "table"),
+                             list(name = "bayesDescriptivesPlot", type = "image"))
 
   # chi-square Table
   # Generate results
-  if (is.null(chisqResults)) {
-    chisqResults <- .chisquareTest(dataset, options, factor, perform)
+  if (is.null(bayesMultResults)) {
+    bayesMultResults <- .bayesMultinomialTest(dataset, options, factor, perform)
   }
 
-  results[["chisq"]] <- .chisqTable(chisqResults, options, perform)
+  results[["bayesMult"]] <- .bayesMultTable(bayesMultResults, options, perform)
 
 
   # Descriptives Table
   if (options[["descriptives"]]) {
     # Generate descriptives table
-    if (is.null(descriptivesTable)) {
-      descriptivesTable <- .multinomialDescriptives(chisqResults, factor, options, perform)
+    if (is.null(bayesDescriptivesTable)) {
+      bayesDescriptivesTable <- .multinomialDescriptives(bayesMultResults, factor, options, perform)
     }
 
-    results[["descriptivesTable"]] <- descriptivesTable
+    results[["bayesDescriptivesTable"]] <- bayesDescriptivesTable
 
   } else {
 
-    results[["descriptivesTable"]] <- NULL
+    results[["bayesDescriptivesTable"]] <- NULL
 
   }
 
   # Multinomial Descriptives Plot
-  if (options[["descriptivesPlot"]]) {
+  if (options[["bayesDescriptivesPlot"]]) {
     # Generate descriptives plots
-    if (is.null(descriptivesPlot)) {
-      descriptivesPlot <- .multinomialDescriptivesPlot(chisqResults, options, perform)
+    if (is.null(bayesDescriptivesPlot)) {
+      bayesDescriptivesPlot <- .multinomialbayesDescriptivesPlot(bayesMultResults, options, perform)
     }
 
-    plotPath <- list(descriptivesPlot$data) # for keep later
+    plotPath <- list(bayesDescriptivesPlot$data) # for keep later
 
-    results[["descriptivesPlot"]] <- descriptivesPlot
+    results[["bayesDescriptivesPlot"]] <- bayesDescriptivesPlot
 
   } else {
 
-    results[["descriptivesPlot"]] <- NULL
+    results[["bayesDescriptivesPlot"]] <- NULL
     plotPath <- list()
 
   }
@@ -146,9 +147,9 @@ MultinomialTest <- function(dataset = NULL, options, perform = "run",
 
     state <- list()
     state[["options"]] <- options
-    state[["chisqResults"]] <- chisqResults
-    state[["descriptivesTable"]] <- descriptivesTable
-    state[["descriptivesPlot"]] <- descriptivesPlot
+    state[["bayesMultResults"]] <- bayesMultResults
+    state[["bayesDescriptivesTable"]] <- bayesDescriptivesTable
+    state[["bayesDescriptivesPlot"]] <- bayesDescriptivesPlot
 
     return(list(results=results, status="complete", state=state,
                 keep = plotPath))
@@ -165,9 +166,9 @@ MultinomialTest <- function(dataset = NULL, options, perform = "run",
 }
 
 # Run chi-square test and return object
-.chisquareTest <- function(dataset, options, factor, perform){
+.bayesMultiomialTest <- function(dataset, options, factor, perform){
 
-  chisqResults <- NULL
+  bayesMultResults <- NULL
 
   if (perform == "run" && !is.null(factor)) {
     # first determine the hypotheses
@@ -185,33 +186,44 @@ MultinomialTest <- function(dataset = NULL, options, perform = "run",
     t <- table(f)
     val <- t[unique(f)]
 
-    hyps <- .multinomialHypotheses(dataset, options, nlev)
+    hyps <- .multinomialHypotheses(dataset, options, nlev) # only one hypothesis at the time
 
-    # create a named list with as values the chi-square result objects
+    # create a named list with bayesian multinomial result object
 
-
-    chisqResults <- lapply(hyps, function(h) {
+    bayesMultResults <- function(h){
       # catch warning message and append to object if necessary
-      csr <- NULL
+      bmr  <- NULL
       warn <- NULL
-      csr <- withCallingHandlers(
-        chisq.test(x = val, p = h, rescale.p = TRUE),
-        warning = function(w){
-         warn <<- w$message
-        }
-      )
-      csr[["warn"]] <- warn
-      return(csr)
-    })
+      
+      h        <- h/sum(h)
+      a.prior  <- rep(1, length(h))                                       
+      
+      # check if probabilities sum to 1
+      sumToOne <- sum(h) == 1
+      if(sumToOne == FALSE){
+        warn <- 'Probabilites were rescaled to sum to 1.'
+      }
+      # calculate Savage-Dickey BF
+      beta.xa <- prod(gamma(val + a.prior))/gamma(sum(val + a.prior)) # Beta(x + a)
+      beta.a  <- prod(gamma(a.prior))/gamma(sum(a.prior))             # Beta(a)
+      prior     <- (1/beta.a)  * (prod(h^(a.prior - 1)))
+      posterior <- (1/beta.xa) * (prod(h^((val + a.prior) - 1)))
+      BF        <- prior/posterior
+
+      bmr <- list(nlevels = length(h),
+                  BF      = BF)
+      bmr[["warn"]] <- warn
+      return(bmr)
+    }
   }
 
   # return the out object
-  return(chisqResults)
+  return(bayesMultResults)
 }
 
 # Transform chi-square test object into table for JASP
-# chisqResults = list(H1 = obj, H2 = obj, ....)
-.chisqTable <- function(chisqResults, options, perform){
+# bayesMultResults = list(H1 = obj, H2 = obj, ....)
+.bayesMultTable <- function(bayesMultResults, options, perform){
   table <- list()
   footnotes <- .newFootnotes()
   table[["title"]] <- "Multinomial Test"
@@ -224,30 +236,17 @@ MultinomialTest <- function(dataset = NULL, options, perform = "run",
     list(name="p", title="p", type="number", format="dp:3;p:.001")
     )
 
-  # include Vovk-Selke p-ratio as columns
-  if (options$VovkSellkeMPR) {
-    .addFootnote(footnotes, symbol = "\u002A", text = "Vovk-Sellke Maximum
-    <em>p</em>-Ratio: Based the <em>p</em>-value, the maximum
-    possible odds in favor of H\u2081 over H\u2080 equals
-    1/(-e <em>p</em> log(<em>p</em>)) for <em>p</em> \u2264 .37
-    (Sellke, Bayarri, & Berger, 2001).")
-    fields[[length(fields) + 1]] <- list(name = "VovkSellkeMPR",
-                                        title = "VS-MPR\u002A",
-                                        type = "number",
-                                        format = "sf:4;dp:3")
-  }
-
   # include footnotes
 
   table[["schema"]] <- list(fields = fields)
 
   message <- list()
 
-  for(r in 1:length(chisqResults)){
+  for(r in 1:length(bayesMultResults)){
 
-    if(!is.null(chisqResults[[r]][["warn"]])) {
+    if(!is.null(bayesMultResults[[r]][["warn"]])) {
 
-      message[[r]] <- chisqResults[[r]][["warn"]]
+      message[[r]] <- bayesMultResults[[r]][["warn"]]
       .addFootnote(footnotes, symbol="<em>Note.</em>", text=message)
     }
   }
@@ -255,13 +254,13 @@ MultinomialTest <- function(dataset = NULL, options, perform = "run",
   table[["footnotes"]] <- as.list(footnotes)
 
   # fill in results one row at a time
-  if (!is.null(chisqResults)){
+  if (!is.null(bayesMultResults)){
 
-  for(r in 1:length(chisqResults)){
-      table[["data"]][[r]] <- list(case = names(chisqResults)[r],
-                                   chisquare = chisqResults[[r]][["statistic"]][["X-squared"]],
-                                   df = chisqResults[[r]][["parameter"]][["df"]],
-                                   p = chisqResults[[r]][["p.value"]])
+  for(r in 1:length(bayesMultResults)){
+      table[["data"]][[r]] <- list(case = names(bayesMultResults)[r],
+                                   chisquare = bayesMultResults[[r]][["statistic"]][["X-squared"]],
+                                   df = bayesMultResults[[r]][["parameter"]][["df"]],
+                                   p = bayesMultResults[[r]][["p.value"]])
 
       if (options$VovkSellkeMPR){
         for (row in 1:length(table[["data"]])){
@@ -275,7 +274,7 @@ MultinomialTest <- function(dataset = NULL, options, perform = "run",
     # init state?
     data <- list()
 
-    if(is.null(chisqResults[[r]])){
+    if(is.null(bayesMultResults[[r]])){
       htables <- ""
     }
     # for (h in htables){
@@ -296,7 +295,7 @@ MultinomialTest <- function(dataset = NULL, options, perform = "run",
 }
 
 # Create multinomial descriptives table
-.multinomialDescriptives <- function(chisqResults, factor, options, perform) {
+.multinomialDescriptives <- function(bayesMultResults, factor, options, perform) {
   if (options[["countProp"]]=="descCounts"){
     numberType = list(type="integer")
   } else {
@@ -315,8 +314,8 @@ MultinomialTest <- function(dataset = NULL, options, perform = "run",
       c(list(name="observed", title="Observed"), numberType),
       c(list(name="expected", title="Expected"), numberType)
     )
-    if (options$confidenceInterval){
-      interval <- 100 * options$confidenceIntervalInterval
+    if (options$credibleInterval){
+      interval <- 100 * options$credibleIntervalInterval
       title <- paste0(interval, "% Confidence Interval")
       fields[[length(fields)+1]] <- list(name="lowerCI",
                                          title="Lower",
@@ -340,8 +339,8 @@ MultinomialTest <- function(dataset = NULL, options, perform = "run",
       c(list(name="observed", title="Observed"), numberType),
       c(list(name="expected", title="Expected"), numberType)
     )
-    if (options$confidenceInterval){
-      interval <- 100 * options$confidenceIntervalInterval
+    if (options$credibleInterval){
+      interval <- 100 * options$credibleIntervalInterval
       title <- paste0(interval, "% Confidence Interval")
       fields[[length(fields)+1]] <- list(name="lowerCI",
                                          title="Lower",
@@ -366,7 +365,7 @@ MultinomialTest <- function(dataset = NULL, options, perform = "run",
       c(list(name="observed", title="Observed"), numberType)
     )
 
-    nms <- names(chisqResults)
+    nms <- names(bayesMultResults)
 
     if (length(nms) == 1) {
       fields[[length(fields)+1]] <- c(list(name="expected",
@@ -381,8 +380,8 @@ MultinomialTest <- function(dataset = NULL, options, perform = "run",
       }
     }
 
-    if (options$confidenceInterval){
-      interval <- 100 * options$confidenceIntervalInterval
+    if (options$credibleInterval){
+      interval <- 100 * options$credibleIntervalInterval
       title <- paste0(interval, "% Confidence Interval")
       fields[[length(fields)+1]] <- list(name="lowerCI",
                                          title="Lower",
@@ -400,15 +399,15 @@ MultinomialTest <- function(dataset = NULL, options, perform = "run",
     if (options[["countProp"]]=="descCounts"){
       div <- 1
     } else {
-      div <- sum(chisqResults[[1]][["observed"]])
+      div <- sum(bayesMultResults[[1]][["observed"]])
     }
 
-    tableFrame <- data.frame(factor = names(chisqResults[[1]][["observed"]]),
-                             observed = as.integer(chisqResults[[1]][["observed"]])/div,
+    tableFrame <- data.frame(factor = names(bayesMultResults[[1]][["observed"]]),
+                             observed = as.integer(bayesMultResults[[1]][["observed"]])/div,
                              stringsAsFactors = FALSE)
 
 
-    for (r in chisqResults){
+    for (r in bayesMultResults){
       tableFrame <- cbind(tableFrame, as.integer(r[["expected"]])/div)
     }
 
@@ -418,12 +417,12 @@ MultinomialTest <- function(dataset = NULL, options, perform = "run",
       colnames(tableFrame)[-(1:2)] <- nms
     }
 
-    # Add confidenceInterval
-    if (options$confidenceInterval){
-      n <- sum(chisqResults[[1]][["observed"]])
+    # Add credibleInterval
+    if (options$credibleInterval){
+      n <- sum(bayesMultResults[[1]][["observed"]])
       # make a list of cis
-      ci <- lapply(chisqResults[[1]][["observed"]], function(l) {
-        bt <- binom.test(l,n,conf.level = options$confidenceIntervalInterval)
+      ci <- lapply(bayesMultResults[[1]][["observed"]], function(l) {
+        bt <- binom.test(l,n,conf.level = options$credibleIntervalInterval)
         return(bt$conf.int * n) # on the count scale
       })
 
@@ -449,13 +448,13 @@ MultinomialTest <- function(dataset = NULL, options, perform = "run",
 }
 
 # Create multinomial descriptives plot
-.multinomialDescriptivesPlot <- function(chisqResults, options, perform) {
+.multinomialbayesDescriptivesPlot <- function(bayesMultResults, options, perform) {
 
   # init output object
-  descriptivesPlot <- list("title" = "Descriptives plot")
-  descriptivesPlot[["width"]] <- options$plotWidth
-  descriptivesPlot[["height"]] <- options$plotHeight
-  descriptivesPlot[["custom"]] <- list(width = "plotWidth",
+  bayesDescriptivesPlot <- list("title" = "Descriptives plot")
+  bayesDescriptivesPlot[["width"]] <- options$plotWidth
+  bayesDescriptivesPlot[["height"]] <- options$plotHeight
+  bayesDescriptivesPlot[["custom"]] <- list(width = "plotWidth",
                                       height = "plotHeight")
 
   if (perform == "run"){
@@ -466,17 +465,17 @@ MultinomialTest <- function(dataset = NULL, options, perform = "run",
       div <- 1
       yname <- "Observed counts"
     } else {
-      div <- sum(chisqResults[[1]][["observed"]])
+      div <- sum(bayesMultResults[[1]][["observed"]])
       yname <- "Observed proportions"
     }
 
     # Observed values
-    obs <- chisqResults[[1]][["observed"]]/div
+    obs <- bayesMultResults[[1]][["observed"]]/div
 
     # Calculate confidence interval
-    cl <- options$descriptivesPlotConfidenceInterval
-    n <- sum(chisqResults[[1]][["observed"]])
-    ci <- lapply(chisqResults[[1]][["observed"]], function(l) {
+    cl <- options$bayesDescriptivesPlotcredibleInterval
+    n <- sum(bayesMultResults[[1]][["observed"]])
+    ci <- lapply(bayesMultResults[[1]][["observed"]], function(l) {
       bt <- binom.test(l,n,conf.level = cl)
       return(bt$conf.int * n) # on the count scale
     })
@@ -533,27 +532,27 @@ MultinomialTest <- function(dataset = NULL, options, perform = "run",
                            height = options$plotHeight,
                            plot = p, obj = TRUE)
 
-    descriptivesPlot[["convertible"]] <- TRUE
-    descriptivesPlot[["obj"]] <- content[["obj"]]
-    descriptivesPlot[["data"]] <- content[["png"]]
-    descriptivesPlot[["status"]] <- "complete"
+    bayesDescriptivesPlot[["convertible"]] <- TRUE
+    bayesDescriptivesPlot[["obj"]] <- content[["obj"]]
+    bayesDescriptivesPlot[["data"]] <- content[["png"]]
+    bayesDescriptivesPlot[["status"]] <- "complete"
 
   } else {
-    descriptivesPlot[["data"]] <- ""
+    bayesDescriptivesPlot[["data"]] <- ""
   }
 
-  return(descriptivesPlot)
+  return(bayesDescriptivesPlot)
 
 }
 
 # Transform input into a list of hypotheses
 .multinomialHypotheses <- function(dataset, options, nlevels){
-  # This function transforms the input into a list of hypotheses
-  hyps <- list()
+  # This function transforms the input into a hypothesis object
+  hyps <- NULL
 
-  if (options$hypothesis == "multinomialTest"){
+  if (options$hypothesis == "bayesMultinomialTest"){
     # Expected probabilities are simple now
-    hyps[["Multinomial"]] <- rep(1/nlevels, nlevels)
+    hyps <- rep(1/nlevels, nlevels)
 
   } else {
 
@@ -561,7 +560,7 @@ MultinomialTest <- function(dataset = NULL, options, perform = "run",
     expectedDf <- .generateExpectedDf(dataset, options, nlevels)
 
     # assign each hypothesis to the hyps object
-    hyps <- as.list(expectedDf)
+    hyps <- expectedDF
 
   }
   return(hyps)
@@ -569,13 +568,11 @@ MultinomialTest <- function(dataset = NULL, options, perform = "run",
 
 # Parse expected probabilities/counts
 .generateExpectedDf <- function(dataset, options, nlevels){
-  # This function returns a data frame with in each named column the expected
-  # probabilities. The column names are the hypothesis names.
+  # This function returns a vector of expected probabilities.
 
   if (options$exProbVar != ""){
     # use only exProbVar
-    eDf <- data.frame(dataset[[.v(options$exProbVar)]])
-    colnames(eDf) <- options$exProbVar
+    eDf <- dataset[[.v(options$exProbVar)]]
 
     if (nlevels != nrow(eDf)){
       stop("Expected counts do not match number of levels of factor!")

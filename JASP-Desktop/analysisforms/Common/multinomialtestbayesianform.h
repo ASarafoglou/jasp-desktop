@@ -19,7 +19,7 @@
 #ifndef MULTINOMIALTESTBAYESIANFORM_H
 #define MULTINOMIALTESTBAYESIANFORM_H
 
-#include "analysisform.h"
+#include "../analysisform.h"
 
 namespace Ui {
 class MultinomialTestBayesianForm;

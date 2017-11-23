@@ -72,7 +72,6 @@
 #include "analysisforms/Network/networkanalysisform.h"
 
 #include "analysisforms/MetaAnalysis/classicalmetaanalysisform.h"
-#include "analysisforms/MetaAnalysis/multinomialtestform.h"
 
 ///// 1-analyses headers
 
