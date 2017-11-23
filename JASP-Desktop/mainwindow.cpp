@@ -19,60 +19,62 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#include "analysisforms/descriptivesform.h"
-
-#include "analysisforms/ttestbayesianindependentsamplesform.h"
-#include "analysisforms/ttestbayesianpairedsamplesform.h"
-#include "analysisforms/ttestbayesianonesampleform.h"
-#include "analysisforms/ttestindependentsamplesform.h"
-#include "analysisforms/ttestpairedsamplesform.h"
-#include "analysisforms/ttestonesampleform.h"
-
-
-#include "analysisforms/anovaonewayform.h"
-#include "analysisforms/anovaform.h"
-#include "analysisforms/anovarepeatedmeasuresform.h"
-#include "analysisforms/ancovaform.h"
-#include "analysisforms/anovamultivariateform.h"
-#include "analysisforms/ancovamultivariateform.h"
-
-#include "analysisforms/anovabayesianform.h"
-#include "analysisforms/ancovabayesianform.h"
-#include "analysisforms/anovarepeatedmeasuresbayesianform.h"
-
-#include "analysisforms/regressionlinearform.h"
-#include "analysisforms/regressionlinearbayesianform.h"
-#include "analysisforms/regressionloglinearform.h"
-#include "analysisforms/regressionloglinearbayesianform.h"
-#include "analysisforms/correlationform.h"
-#include "analysisforms/correlationbayesianform.h"
-#include "analysisforms/correlationbayesianpairsform.h"
-#include "analysisforms/correlationpartialform.h"
-#include "analysisforms/contingencytablesform.h"
-#include "analysisforms/contingencytablesbayesianform.h"
-
-#include "analysisforms/binomialtestform.h"
-#include "analysisforms/multinomialtestform.h"
-#include "analysisforms/multinomialtestbayesianform.h"
-#include "analysisforms/binomialtestbayesianform.h"
-#include "analysisforms/bffromtform.h"
-#include "analysisforms/SummaryStatistics/summarystatsttestbayesianindependentsamplesform.h"
-#include "analysisforms/SummaryStatistics/summarystatsttestbayesianpairedsamplesform.h"
-#include "analysisforms/SummaryStatistics/summarystatsttestbayesianonesampleform.h"
-#include "analysisforms/SummaryStatistics/summarystatsbinomialtestbayesianform.h"
-#include "analysisforms/SummaryStatistics/summarystatsregressionlinearbayesianform.h"
-#include "analysisforms/SummaryStatistics/summarystatscorrelationbayesianpairsform.h"
+#include "analysisforms/Common/ancovabayesianform.h"
+#include "analysisforms/Common/ancovaform.h"
+#include "analysisforms/Common/ancovamultivariateform.h"
+#include "analysisforms/Common/anovabayesianform.h"
+#include "analysisforms/Common/anovaform.h"
+#include "analysisforms/Common/anovamultivariateform.h"
+#include "analysisforms/Common/anovaonewayform.h"
+#include "analysisforms/Common/anovarepeatedmeasuresbayesianform.h"
+#include "analysisforms/Common/anovarepeatedmeasuresform.h"
+#include "analysisforms/Common/binomialtestbayesianform.h"
+#include "analysisforms/Common/binomialtestform.h"
+#include "analysisforms/Common/contingencytablesbayesianform.h"
+#include "analysisforms/Common/contingencytablesform.h"
+#include "analysisforms/Common/correlationbayesianform.h"
+#include "analysisforms/Common/correlationbayesianpairsform.h"
+#include "analysisforms/Common/correlationform.h"
+#include "analysisforms/Common/correlationpartialform.h"
+#include "analysisforms/Common/descriptivesform.h"
+#include "analysisforms/Common/exploratoryfactoranalysisform.h"
+#include "analysisforms/Common/multinomialtestform.h"
+#include "analysisforms/Common/multinomialtestbayesianform.h"
+#include "analysisforms/Common/principalcomponentanalysisform.h"
+#include "analysisforms/Common/regressionlinearbayesianform.h"
+#include "analysisforms/Common/regressionlinearform.h"
+#include "analysisforms/Common/regressionlogisticform.h"
+#include "analysisforms/Common/regressionloglinearbayesianform.h"
+#include "analysisforms/Common/regressionloglinearform.h"
+#include "analysisforms/Common/reliabilityanalysisform.h"
+#include "analysisforms/Common/ttestbayesianindependentsamplesform.h"
+#include "analysisforms/Common/ttestbayesianonesampleform.h"
+#include "analysisforms/Common/ttestbayesianpairedsamplesform.h"
+#include "analysisforms/Common/ttestindependentsamplesform.h"
+#include "analysisforms/Common/ttestonesampleform.h"
+#include "analysisforms/Common/ttestpairedsamplesform.h"
 
 #ifdef QT_DEBUG
-#include "analysisforms/basregressionlinearlinkform.h"
+#include "analysisforms/Common/basregressionlinearlinkform.h"
 #endif
 
-#include "analysisforms/SEM/semsimpleform.h"
-#include "analysisforms/R11tLearn/r11tlearnform.h"
+#include "analysisforms/SummaryStatistics/summarystatsbinomialtestbayesianform.h"
+#include "analysisforms/SummaryStatistics/summarystatscorrelationbayesianpairsform.h"
+#include "analysisforms/SummaryStatistics/summarystatsregressionlinearbayesianform.h"
+#include "analysisforms/SummaryStatistics/summarystatsttestbayesianindependentsamplesform.h"
+#include "analysisforms/SummaryStatistics/summarystatsttestbayesianonesampleform.h"
+#include "analysisforms/SummaryStatistics/summarystatsttestbayesianpairedsamplesform.h"
 
-#include "analysisforms/reliabilityanalysisform.h"
-#include "analysisforms/exploratoryfactoranalysisform.h"
-#include "analysisforms/principalcomponentanalysisform.h"
+#include "analysisforms/SEM/semsimpleform.h"
+
+#include "analysisforms/ReinforcementLearning/reinforcementlearningr11tlearningform.h"
+
+#include "analysisforms/Network/networkanalysisform.h"
+
+#include "analysisforms/MetaAnalysis/classicalmetaanalysisform.h"
+#include "analysisforms/MetaAnalysis/multinomialtestform.h"
+
+///// 1-analyses headers
 
 #include <QDebug>
 #include <QWebFrame>
@@ -102,15 +104,19 @@
 #include "processinfo.h"
 #include "appinfo.h"
 
-
 #include "lrnam.h"
 #include "activitylog.h"
 #include "aboutdialog.h"
 #include "preferencesdialog.h"
 #include <boost/filesystem.hpp>
 #include "dirs.h"
+#include "qutils.h"
+#include "column.h"
+#include "sharedmemory.h"
+#include "module.h"
 
 #include "options/optionvariablesgroups.h"
+
 
 using namespace std;
 
@@ -145,19 +151,17 @@ MainWindow::MainWindow(QWidget *parent) :
 	sizes.append(initalTableWidth);
 	ui->splitter->setSizes(sizes);
 
-	ui->tabBar->setFocusPolicy(Qt::NoFocus);
-	ui->tabBar->addTab("File");
-	ui->tabBar->addTab("Common");
-
-	ui->tabBar->addHelpTab();
-
 	connect(ui->tabBar, SIGNAL(currentChanged(int)), this, SLOT(tabChanged(int)));
 	connect(ui->tabBar, SIGNAL(helpToggled(bool)), this, SLOT(helpToggled(bool)));
+	ui->tabBar->init();
 
 	ui->ribbonAnalysis->setDataSetLoaded(false);
 	ui->ribbonSEM->setDataSetLoaded(false);
-	ui->ribbonR11tLearn->setDataSetLoaded(false);
+	ui->ribbonReinforcementLearning->setDataSetLoaded(false);
 	ui->ribbonSummaryStatistics->setDataSetLoaded(false);
+	ui->ribbonMetaAnalysis->setDataSetLoaded(false);
+	ui->ribbonNetworkAnalysis->setDataSetLoaded(false);
+///// 2-ribbon setDataSetLoaded
 
 #ifdef QT_DEBUG
 	ui->webViewResults->page()->settings()->setAttribute(QWebSettings::DeveloperExtrasEnabled, true);
@@ -186,8 +190,6 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui->tableView->setVariablesView(ui->variablesPage);
 	ui->variablesPage->hide();
 
-	ui->tabBar->setCurrentIndex(1);
-
 	ui->tableView->setVerticalScrollMode(QTableView::ScrollPerPixel);
 	ui->tableView->setHorizontalScrollMode(QTableView::ScrollPerPixel);
 
@@ -202,8 +204,11 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	connect(ui->ribbonAnalysis, SIGNAL(itemSelected(QString)), this, SLOT(itemSelected(QString)));
 	connect(ui->ribbonSEM, SIGNAL(itemSelected(QString)), this, SLOT(itemSelected(QString)));
-	connect(ui->ribbonR11tLearn, SIGNAL(itemSelected(QString)), this, SLOT(itemSelected(QString)));
+	connect(ui->ribbonReinforcementLearning, SIGNAL(itemSelected(QString)), this, SLOT(itemSelected(QString)));
 	connect(ui->ribbonSummaryStatistics, SIGNAL(itemSelected(QString)), this, SLOT(itemSelected(QString)));
+	connect(ui->ribbonMetaAnalysis, SIGNAL(itemSelected(QString)), this, SLOT(itemSelected(QString)));
+	connect(ui->ribbonNetworkAnalysis, SIGNAL(itemSelected(QString)), this, SLOT(itemSelected(QString)));
+///// 3-connect ribbon itemSelected
 	connect(ui->backStage, SIGNAL(dataSetIORequest(FileEvent*)), this, SLOT(dataSetIORequest(FileEvent*)));
 	connect(ui->backStage, SIGNAL(exportSelected(QString)), this, SLOT(exportSelected(QString)));
 	connect(ui->variablesPage, SIGNAL(columnChanged(QString)), this, SLOT(refreshAnalysesUsingColumn(QString)));
@@ -235,6 +240,8 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(this, SIGNAL(simulatedMouseClick(int, int, int)), this, SLOT(simulatedMouseClickHandler(int, int, int)));
 	connect(this, SIGNAL(resultsDocumentChanged()), this, SLOT(resultsDocumentChangedHandler()));
 	connect(ui->tabBar, SIGNAL(setExactPValuesHandler(bool)), this, SLOT(setExactPValuesHandler(bool)));
+	connect(ui->tabBar, SIGNAL(setFixDecimalsHandler(QString)), this, SLOT(setFixDecimalsHandler(QString)));
+	connect(ui->tabBar, SIGNAL(emptyValuesChangedHandler()), this, SLOT(emptyValuesChangedHandler()));
 
 #ifdef __APPLE__
 	_scrollbarWidth = 3;
@@ -273,13 +280,13 @@ MainWindow::MainWindow(QWidget *parent) :
 	_analysisMenu = new QMenu(this);
 	connect(_analysisMenu, SIGNAL(aboutToHide()), this, SLOT(menuHidding()));
 
-	updateUIFromOptions();
-
 	_tableViewWidthBeforeOptionsMadeVisible = -1;
 
 	QUrl userGuide = QUrl::fromLocalFile(AppDirs::help() + "/index.html");
 	ui->webViewHelp->setUrl(userGuide);
 	connect(ui->webViewHelp, SIGNAL(loadFinished(bool)), this, SLOT(helpFirstLoaded(bool)));
+	ui->webViewHelp->page()->setLinkDelegationPolicy(QWebPage::DelegateAllLinks);
+	connect(ui->webViewHelp, SIGNAL( linkClicked( QUrl ) ), this, SLOT( linkClickedSlot( QUrl ) ) );
 	ui->panel_4_Help->hide();
 
 	setAcceptDrops(true);
@@ -291,7 +298,16 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui->panel_1_Data->show();
 	ui->panel_2_Options->hide();
 
+	// init Empty Values
+	QString missingvaluestring = _settings.value("MissingValueList", "").toString();
+	if (missingvaluestring != "")
+	{
+		QString delimetor = "|";
+		std::vector<std::string> missingvalues = fromQstringToStdVector(missingvaluestring, delimetor);
+		Utils::setEmptyValues(missingvalues);
+	}
 }
+
 
 void MainWindow::open(QString filepath)
 {
@@ -302,16 +318,25 @@ void MainWindow::open(QString filepath)
 		_openOnLoadFilename = filepath;
 }
 
+
 MainWindow::~MainWindow()
 {
+	delete _engineSync;
+	if (_package && _package->dataSet)
+	{
+		_loader.free(_package->dataSet);
+		_package->reset();
+	}
 	delete ui;
 }
+
 
 void MainWindow::resizeEvent(QResizeEvent *event)
 {
 	QMainWindow::resizeEvent(event);
 	adjustOptionsPanelWidth();
 }
+
 
 void MainWindow::dragEnterEvent(QDragEnterEvent *event)
 {
@@ -334,6 +359,7 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *event)
 	}
 }
 
+
 void MainWindow::dropEvent(QDropEvent *event)
 {
 	const QMimeData *data = event->mimeData();
@@ -342,6 +368,7 @@ void MainWindow::dropEvent(QDropEvent *event)
 
 	event->accept();
 }
+
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
@@ -364,7 +391,11 @@ void MainWindow::closeEvent(QCloseEvent *event)
 	{
 		event->accept();
 	}
+	
+	PreferencesDialog *rd = ui->tabBar->getPreferencesDialog();
+	if (rd) rd->close();
 }
+
 
 void MainWindow::saveKeysSelected()
 {
@@ -374,20 +405,24 @@ void MainWindow::saveKeysSelected()
 	}
 }
 
+
 void MainWindow::openKeysSelected()
 {
 
 }
+
 
 void MainWindow::refreshKeysSelected()
 {
 	refreshAllAnalyses();
 }
 
+
 void MainWindow::syncKeysSelected()
 {
 	ui->backStage->sync();
 }
+
 
 void MainWindow::illegalOptionStateChanged()
 {
@@ -405,6 +440,7 @@ void MainWindow::illegalOptionStateChanged()
 	}
 }
 
+
 void MainWindow::packageChanged(DataSetPackage *package)
 {
 	QString title = windowTitle();
@@ -419,9 +455,10 @@ void MainWindow::packageChanged(DataSetPackage *package)
 	}
 }
 
-void MainWindow::refreshAnalysesUsingColumns(vector<string> &changedColumns
-											, vector<string> &missingColumns
-											, map<string, string> &changeNameColumns)
+
+void MainWindow::refreshAnalysesUsingColumns(vector<string> &changedColumns,
+											 vector<string> &missingColumns,
+											 map<string, string> &changeNameColumns)
 {
 	vector<string> oldColumnNames;
 	for (map<string, string>::iterator it = changeNameColumns.begin(); it != changeNameColumns.end(); ++it)
@@ -491,10 +528,11 @@ void MainWindow::refreshAnalysesUsingColumns(vector<string> &changedColumns
 	}
 }
 
-void MainWindow::packageDataChanged(DataSetPackage *package
-									, std::vector<std::string> &changedColumns
-									, std::vector<std::string> &missingColumns
-									, std::map<std::string, std::string> &changeNameColumns)
+
+void MainWindow::packageDataChanged(DataSetPackage *package,
+									vector<string> &changedColumns,
+									vector<string> &missingColumns,
+									map<string, string> &changeNameColumns)
 {
 	_tableModel->setDataSet(_package->dataSet);
 	ui->variablesPage->setDataSet(_package->dataSet);
@@ -538,6 +576,7 @@ QString MainWindow::escapeJavascriptString(const QString &str)
 	return out;
 }
 
+
 void MainWindow::analysisUserDataLoadedHandler(Analysis *analysis)
 {
 	QString results = tq(analysis->userData().toStyledString());
@@ -545,6 +584,7 @@ void MainWindow::analysisUserDataLoadedHandler(Analysis *analysis)
 	results = escapeJavascriptString(results);
 	results = "window.loadUserData(" + QString::number(analysis->id()) + ", JSON.parse('" + results + "'));";
 }
+
 
 void MainWindow::analysisResultsChangedHandler(Analysis *analysis)
 {
@@ -588,6 +628,7 @@ void MainWindow::analysisResultsChangedHandler(Analysis *analysis)
 		_package->setModified(true);
 }
 
+
 void MainWindow::analysisSaveImageHandler(int id, QString options)
 {
 	Analysis *analysis = _analyses->get(id);
@@ -600,29 +641,42 @@ void MainWindow::analysisSaveImageHandler(int id, QString options)
 	parser.parse(utf8, root);
 
 	QString caption = "Save JASP Image";
-	QString filter = "Portable Network Graphics (*.png);;Encapsulated PostScript (*.eps)";
-    QString selectedFilter;
+	QString filter = "Portable Network Graphics (*.png);;Portable Document Format (*.pdf);;Encapsulated PostScript (*.eps);;300 dpi Tagged Image File (*.tiff)";
+	QString selectedFilter;
 
-    QString finalPath = QFileDialog::getSaveFileName(this, caption, QString(), filter, &selectedFilter);
+	QString finalPath = QFileDialog::getSaveFileName(this, caption, QString(), filter, &selectedFilter);
 	if (!finalPath.isEmpty())
 	{
-        if (selectedFilter == "Encapsulated PostScript (*.eps)")
+		if (selectedFilter == "Encapsulated PostScript (*.eps)")
 		{
 			root["type"] = "eps";
-            root["finalPath"] = finalPath.toStdString();
-            analysis->saveImage(analysis, root);
+			root["finalPath"] = finalPath.toStdString();
+			analysis->saveImage(analysis, root);
+		}
+		else if (selectedFilter == "Portable Document Format (*.pdf)")
+		{
+			root["type"] = "pdf";
+			root["finalPath"] = finalPath.toStdString();
+			analysis->saveImage(analysis, root);
+		}
+		else if (selectedFilter == "300 dpi Tagged Image File (*.tiff)")
+		{
+			root["type"] = "tiff";
+			root["finalPath"] = finalPath.toStdString();
+			analysis->saveImage(analysis, root);
 		}
 		else
 		{
-            QString imagePath = QString::fromStdString(tempfiles_sessionDirName()) + "/" + root.get("name", Json::nullValue).asCString();
+			QString imagePath = QString::fromStdString(tempfiles_sessionDirName()) + "/" + root.get("name", Json::nullValue).asCString();
 			if (QFile::exists(finalPath))
 			{
 				QFile::remove(finalPath);
 			}
 			QFile::copy(imagePath, finalPath);
-        }
+		}
 	}
 }
+
 
 void MainWindow::analysisImageSavedHandler(Analysis *analysis)
 {
@@ -645,10 +699,12 @@ void MainWindow::analysisImageSavedHandler(Analysis *analysis)
 	}
 }
 
+
 AnalysisForm* MainWindow::loadForm(Analysis *analysis)
 {
 	return loadForm(analysis->name());
 }
+
 
 AnalysisForm* MainWindow::loadForm(const string name)
 {
@@ -691,6 +747,8 @@ AnalysisForm* MainWindow::loadForm(const string name)
 		form = new RegressionLinearForm(contentArea);
 	else if (name == "RegressionLinearBayesian")
 		form = new RegressionLinearBayesianForm(contentArea);
+	else if (name == "RegressionLogistic")
+		form = new RegressionLogisticForm(contentArea);
 	else if (name == "RegressionLogLinear")
 		form = new RegressionLogLinearForm(contentArea);
 	else if (name == "RegressionLogLinearBayesian")
@@ -713,8 +771,6 @@ AnalysisForm* MainWindow::loadForm(const string name)
 		form = new AncovaBayesianForm(contentArea);
 	else if (name == "AnovaRepeatedMeasuresBayesian")
 		form = new AnovaRepeatedMeasuresBayesianForm(contentArea);
-	else if (name == "R11tLearn")
-		form = new R11tLearnForm(contentArea);
 	else if (name == "BinomialTest")
 		form = new BinomialTestForm(contentArea);
 	else if (name == "MultinomialTest")
@@ -723,14 +779,12 @@ AnalysisForm* MainWindow::loadForm(const string name)
         form = new MultinomialTestBayesianForm(contentArea);
 	else if (name == "BinomialTestBayesian")
 		form = new BinomialTestBayesianForm(contentArea);
-	else if (name == "BFFromT")
-		form = new BFFromTForm(contentArea);
 	else if (name == "ReliabilityAnalysis")
 		form = new ReliabilityAnalysisForm(contentArea);
 	else if (name == "ExploratoryFactorAnalysis")
-    form = new ExploratoryFactorAnalysisForm(contentArea);
-  else if (name == "PrincipalComponentAnalysis")
-    form = new PrincipalComponentAnalysisForm(contentArea);
+		form = new ExploratoryFactorAnalysisForm(contentArea);
+	else if (name == "PrincipalComponentAnalysis")
+		form = new PrincipalComponentAnalysisForm(contentArea);
 	else if (name == "SummaryStatsTTestBayesianOneSample")
 		form = new SummaryStatsTTestBayesianOneSampleForm(contentArea);
 	else if (name == "SummaryStatsTTestBayesianIndependentSamples")
@@ -743,10 +797,17 @@ AnalysisForm* MainWindow::loadForm(const string name)
 		form = new SummaryStatsRegressionLinearBayesianForm(contentArea);
 	else if (name == "SummaryStatsCorrelationBayesianPairs")
 		form = new SummaryStatsCorrelationBayesianPairsForm(contentArea);
+	else if (name == "ClassicalMetaAnalysis")
+		form = new ClassicalMetaAnalysisForm(contentArea);
 #ifdef QT_DEBUG
 	else if (name == "BASRegressionLinearLink")
 		form = new BASRegressionLinearLinkForm(contentArea);
 #endif
+	else if (name == "NetworkAnalysis")
+		form = new NetworkAnalysisForm(contentArea);
+	else if (name == "ReinforcementLearningR11tLearning")
+		form = new ReinforcementLearningR11tLearningForm(contentArea);
+///// 4-analysis if-else ladder
 	else
 		qDebug() << "MainWindow::loadForm(); form not found : " << name.c_str();
 
@@ -756,6 +817,7 @@ AnalysisForm* MainWindow::loadForm(const string name)
 	return form;
 }
 
+
 void MainWindow::showForm(Analysis *analysis)
 {
 	closeCurrentOptionsWidget();
@@ -764,7 +826,6 @@ void MainWindow::showForm(Analysis *analysis)
 
 	if (_currentOptionsWidget != NULL)
 	{
-
 		//sizing of options widget and panel to fit buttons and conform to largest size for consistency
 
 		QObjectList siblings = _currentOptionsWidget->children();
@@ -783,8 +844,6 @@ void MainWindow::showForm(Analysis *analysis)
 			_buttonPanel->move(ui->panel_2_Options->width() - _buttonPanel->width() - _scrollbarWidth, 0);
 		}
 		_currentOptionsWidget->setMinimumWidth(ui->panel_2_Options->minimumWidth() - _scrollbarWidth);
-
-		//#########################
 
 		Options *options = analysis->options();
 		DataSet *dataSet = _package->dataSet;
@@ -810,6 +869,7 @@ void MainWindow::showForm(Analysis *analysis)
 	}
 }
 
+
 void MainWindow::closeCurrentOptionsWidget()
 {
 	if (_currentOptionsWidget != NULL)
@@ -821,6 +881,7 @@ void MainWindow::closeCurrentOptionsWidget()
 		_currentOptionsWidget = NULL;
 	}
 }
+
 
 void MainWindow::analysisSelectedHandler(int id)
 {
@@ -839,9 +900,9 @@ void MainWindow::analysisSelectedHandler(int id)
 	}
 }
 
+
 void MainWindow::analysisUnselectedHandler()
 {
-
 	if (_currentAnalysis->useData())
 		hideOptionsPanel();
 
@@ -855,6 +916,7 @@ void MainWindow::analysisUnselectedHandler()
 	}
 }
 
+
 void MainWindow::tabChanged(int index)
 {
 	if (index == 0)
@@ -866,24 +928,14 @@ void MainWindow::tabChanged(int index)
 		ui->topLevelWidgets->setCurrentIndex(1); //Should be a reference to the mainPage
 
 		QString currentActiveTab = ui->tabBar->getCurrentActiveTab();
-		if(currentActiveTab == "Common")
+		if (Module::isModuleName(currentActiveTab))
 		{
-			ui->ribbon->setCurrentIndex(0);
-		}
-		else if(currentActiveTab == "SEM")
-		{
-			ui->ribbon->setCurrentIndex(1);
-		}
-		else if(currentActiveTab == "R11t Learn")
-		{
-			ui->ribbon->setCurrentIndex(2);
-		}
-		else if(currentActiveTab == "Summary Stats")
-		{
-			ui->ribbon->setCurrentIndex(3);
+			const Module& module = Module::getModule(currentActiveTab);
+			ui->ribbon->setCurrentIndex(module.ribbonIndex());
 		}
 	}
 }
+
 
 void MainWindow::helpToggled(bool on)
 {
@@ -914,6 +966,25 @@ void MainWindow::helpToggled(bool on)
 	}
 }
 
+
+void MainWindow::checkUsedModules()
+{
+	QStringList usedModules;
+	for (Analyses::iterator itr = _analyses->begin(); itr != _analyses->end(); itr++)
+	{
+		Analysis *analysis = *itr;
+		if (analysis != NULL && analysis->isVisible())
+		{
+			QString moduleName = QString::fromStdString(analysis->module());
+			if (!usedModules.contains(moduleName))
+				usedModules.append(moduleName);
+		}
+	}
+
+	ui->tabBar->setModulePlusMenu(usedModules);
+}
+
+
 void MainWindow::dataSetIORequest(FileEvent *event)
 {
 	if (event->operation() == FileEvent::FileOpen)
@@ -934,8 +1005,7 @@ void MainWindow::dataSetIORequest(FileEvent *event)
 			_progressIndicator->show();
 		}
 
-		ui->tabBar->setCurrentIndex(1);
-
+		ui->tabBar->setCurrentModuleActive();
 	}
 	else if (event->operation() == FileEvent::FileSave)
 	{
@@ -981,7 +1051,6 @@ void MainWindow::dataSetIORequest(FileEvent *event)
 
 		_loader.io(event, _package);
 		_progressIndicator->show();
-
 	}
 	else if (event->operation() == FileEvent::FileExportData)
 	{
@@ -1004,7 +1073,7 @@ void MainWindow::dataSetIORequest(FileEvent *event)
 		{
 			QString title = windowTitle();
 			title.chop(1);
-			QMessageBox::StandardButton reply = QMessageBox::warning(this, "Save Workspace?", QString("Save changes to workspace \"") + title +  QString("\" before closing?\n\nYour changes will be lost if you don't save them."), QMessageBox::Save|QMessageBox::Discard|QMessageBox::Cancel);
+			QMessageBox::StandardButton reply = QMessageBox::warning(this, "Save Workspace?", QString("Save changes to workspace \"") + title + QString("\" before closing?\n\nYour changes will be lost if you don't save them."), QMessageBox::Save|QMessageBox::Discard|QMessageBox::Cancel);
 
 			if (reply == QMessageBox::Save)
 			{
@@ -1033,6 +1102,7 @@ void MainWindow::dataSetIORequest(FileEvent *event)
 	}
 }
 
+
 void MainWindow::dataSetIOCompleted(FileEvent *event)
 {
 	this->analysisOKed();
@@ -1044,7 +1114,7 @@ void MainWindow::dataSetIOCompleted(FileEvent *event)
 		if (event->successful())
 		{
 			populateUIfromDataSet();
-			QString name =  QFileInfo(event->path()).baseName();
+			QString name = QFileInfo(event->path()).baseName();
 			setWindowTitle(name);
 			_currentFilePath = event->path();
 
@@ -1080,7 +1150,7 @@ void MainWindow::dataSetIOCompleted(FileEvent *event)
 	{
 		if (event->successful())
 		{
-			QString name =  QFileInfo(event->path()).baseName();
+			QString name = QFileInfo(event->path()).baseName();
 
 			_package->setModified(false);
 			setWindowTitle(name);
@@ -1104,6 +1174,7 @@ void MainWindow::dataSetIOCompleted(FileEvent *event)
 	{
 		if (event->successful())
 		{
+			_analyses->clear();
 			closeCurrentOptionsWidget();
 			hideOptionsPanel();
 			_tableModel->clearDataSet();
@@ -1126,18 +1197,15 @@ void MainWindow::dataSetIOCompleted(FileEvent *event)
 
 	if (showAnalysis)
 	{
-		ui->tabBar->setCurrentIndex(1);
-
+		ui->tabBar->setCurrentModuleActive();
 	}
 }
+
 
 void MainWindow::populateUIfromDataSet()
 {
 	_tableModel->setDataSet(_package->dataSet);
 	ui->variablesPage->setDataSet(_package->dataSet);
-
-
-	_analyses->clear();
 
 	ui->tableView->adjustAfterDataLoad(true);
 
@@ -1160,7 +1228,6 @@ void MainWindow::populateUIfromDataSet()
 		}
 		else
 		{
-
 			Json::Value analysesDataList = analysesData;
 			if (!analysesData.isArray()) {
 				analysesDataList = analysesData.get("analyses", Json::arrayValue);
@@ -1178,23 +1245,27 @@ void MainWindow::populateUIfromDataSet()
 			{
 				try
 				{
-					QString name = QString();
 					Json::Value &analysisData = *iter;
 
-					name = QString::fromStdString(analysisData["name"].asString());
+					QString name = QString::fromStdString(analysisData["name"].asString());
+					QString module = QString::fromStdString(analysisData["module"].asString());
+					if (module.isEmpty())
+						module = "Common";
 					int id = analysisData["id"].asInt();
 
 					Json::Value &optionsJson = analysisData["options"];
 					Json::Value &resultsJson = analysisData["results"];
 					Json::Value &userDataJson = analysisData["userdata"];
+					Json::Value &versionJson = analysisData["version"];
+
+					Version version = versionJson.isNull() ? AppInfo::version : Version(versionJson.asString());
 
 					Analysis::Status status = Analysis::parseStatus(analysisData["status"].asString());
 
-					Analysis *analysis = _analyses->create(name, id, &optionsJson, status);
+					Analysis *analysis = _analyses->create(module, name, id, version, &optionsJson, status);
 
 					analysis->setUserData(userDataJson);
 					analysis->setResults(resultsJson);
-
 				}
 				catch (runtime_error e)
 				{
@@ -1222,7 +1293,9 @@ void MainWindow::populateUIfromDataSet()
 
 	_package->setLoaded();
 	updateMenuEnabledDisabledStatus();
+	checkUsedModules();
 }
+
 
 void MainWindow::updateMenuEnabledDisabledStatus()
 {
@@ -1230,33 +1303,12 @@ void MainWindow::updateMenuEnabledDisabledStatus()
 
 	ui->ribbonAnalysis->setDataSetLoaded(loaded);
 	ui->ribbonSEM->setDataSetLoaded(loaded);
-	ui->ribbonR11tLearn->setDataSetLoaded(loaded);
+	ui->ribbonReinforcementLearning->setDataSetLoaded(loaded);
+	ui->ribbonMetaAnalysis->setDataSetLoaded(loaded);
+	ui->ribbonNetworkAnalysis->setDataSetLoaded(loaded);
+///// 5-ribbon updateMenuEnabledDisabledStatus
 }
 
-void MainWindow::updateUIFromOptions()
-{
-#ifdef __linux__
-	ui->tabBar->removeTab("SEM");
-#else
-	QVariant sem = _settings.value("plugins/sem", false);
-	if (sem.canConvert(QVariant::Bool) && sem.toBool())
-		ui->tabBar->addTab("SEM");
-	else
-		ui->tabBar->removeTab("SEM");
-#endif
-
-	QVariant rl = _settings.value("toolboxes/r11tLearn", false);
-	if (rl.canConvert(QVariant::Bool) && rl.toBool())
-		ui->tabBar->addTab("R11t Learn");
-	else
-		ui->tabBar->removeTab("R11t Learn");
-
-	QVariant sumStats = _settings.value("toolboxes/summaryStatistics", false);
-	if (sumStats.canConvert(QVariant::Bool) && sumStats.toBool())
-		ui->tabBar->addTab("Summary Stats");
-	else
-		ui->tabBar->removeTab("Summary Stats");
-}
 
 void MainWindow::resultsPageLoaded(bool success)
 {
@@ -1269,7 +1321,8 @@ void MainWindow::resultsPageLoaded(bool success)
 		QString version = tq(AppInfo::version.asString());
 		ui->webViewResults->page()->mainFrame()->evaluateJavaScript("window.setAppVersion('" + version + "')");
 
-		setExactPValuesHandler(_settings.value("exactPVals", 0).toBool());
+		setExactPValuesHandler(_settings.value("displayExactPVals", 0).toBool());
+		setFixDecimalsHandler(_settings.value("numDecimals").toString());
 
 		QVariant ppiv = ui->webViewResults->page()->mainFrame()->evaluateJavaScript("window.getPPI()");
 
@@ -1289,7 +1342,6 @@ void MainWindow::resultsPageLoaded(bool success)
 
 		this->resize(this->width() + (ui->webViewResults->width() * (zoom - 1)), this->height() + (ui->webViewResults->height() * (zoom - 1)));
 #endif
-
 		_engineSync->setPPI(ppi);
 
 		if (_openOnLoadFilename != "")
@@ -1304,6 +1356,7 @@ void MainWindow::resultsPageLoaded(bool success)
 	if (_engineSync->engineStarted() == false)
 		_engineSync->start();
 }
+
 
 void MainWindow::fatalError()
 {
@@ -1321,11 +1374,13 @@ void MainWindow::fatalError()
 	}
 }
 
+
 void MainWindow::helpFirstLoaded(bool ok)
 {
 	if (ok)
 		requestHelpPage("index");
 }
+
 
 void MainWindow::requestHelpPage(const QString &pageName)
 {
@@ -1354,6 +1409,7 @@ void MainWindow::requestHelpPage(const QString &pageName)
 	ui->webViewHelp->page()->mainFrame()->evaluateJavaScript(js);
 }
 
+
 void MainWindow::setExactPValuesHandler(bool exactPValues)
 {
 	QString exactPValueString = (exactPValues ? "true" : "false");
@@ -1361,11 +1417,71 @@ void MainWindow::setExactPValuesHandler(bool exactPValues)
 	ui->webViewResults->page()->mainFrame()->evaluateJavaScript(js);
 }
 
+
+void MainWindow::setFixDecimalsHandler(QString numDecimals)
+{
+	if (numDecimals == "")
+		numDecimals = "\"\"";
+	QString js = "window.globSet.decimals = " + numDecimals + "; window.reRenderAnalyses();";
+	ui->webViewResults->page()->mainFrame()->evaluateJavaScript(js);
+}
+
+
+void MainWindow::emptyValuesChangedHandler()
+{
+	if (_package->isLoaded())
+	{
+		vector<string> colChanged;
+		vector<string> missingColumns;
+		map<string, string> changeNameColumns;
+
+		try
+		{
+			colChanged =_package->dataSet->resetEmptyValues(_package->emptyValuesMap);
+		}
+		catch (boost::interprocess::bad_alloc &e)
+		{
+			try {
+
+				_package->dataSet = SharedMemory::enlargeDataSet(_package->dataSet);
+				colChanged =_package->dataSet->resetEmptyValues(_package->emptyValuesMap);
+			}
+			catch (exception &e)
+			{
+				throw runtime_error("Out of memory: this data set is too large for your computer's available memory");
+			}
+		}
+		catch (exception e)
+		{
+			cout << "n " << e.what();
+			cout.flush();
+		}
+		catch (...)
+		{
+			cout << "something when wrong...\n ";
+			cout.flush();
+		}
+
+		_package->setModified(true);
+		packageDataChanged(_package, colChanged, missingColumns, changeNameColumns);
+	}
+}
+
+
+void MainWindow::linkClickedSlot(QUrl url)
+{
+	QDesktopServices::openUrl ( url );
+}
+
+
 void MainWindow::itemSelected(const QString &item)
 {
 	try
 	{
-		_currentAnalysis = _analyses->create(item);
+		QString currentActiveTab = ui->tabBar->getCurrentActiveTab();
+		const Module& module = Module::getModule(currentActiveTab);
+
+		_currentAnalysis = _analyses->create(module.name(), item);
 
 		showForm(_currentAnalysis);
 		ui->webViewResults->page()->mainFrame()->evaluateJavaScript("window.select(" % QString::number(_currentAnalysis->id()) % ")");
@@ -1373,6 +1489,8 @@ void MainWindow::itemSelected(const QString &item)
 		QString info("%1,%2");
 		info = info.arg(tq(_currentAnalysis->name()));
 		info = info.arg(_currentAnalysis->id());
+
+		checkUsedModules();
 
 		if (_log != NULL)
 			_log->log("Analysis Created", info);
@@ -1383,6 +1501,7 @@ void MainWindow::itemSelected(const QString &item)
 		fatalError();
 	}
 }
+
 
 void MainWindow::saveTextToFileHandler(const QString &filename, const QString &data)
 {
@@ -1404,10 +1523,12 @@ void MainWindow::saveTextToFileHandler(const QString &filename, const QString &d
 	}
 }
 
+
 void MainWindow::exportSelected(const QString &filename)
 {
 	ui->webViewResults->page()->mainFrame()->evaluateJavaScript("window.exportHTML('" + filename + "');");
 }
+
 
 void MainWindow::adjustOptionsPanelWidth()
 {
@@ -1423,11 +1544,13 @@ void MainWindow::adjustOptionsPanelWidth()
 	_buttonPanel->move(ui->panel_2_Options->width() - _buttonPanel->width() - _scrollbarWidth, 0);
 }
 
+
 void MainWindow::splitterMovedHandler(int, int)
 {
 	adjustOptionsPanelWidth();
 	_tableViewWidthBeforeOptionsMadeVisible = -1;
 }
+
 
 void MainWindow::hideOptionsPanel()
 {
@@ -1456,6 +1579,7 @@ void MainWindow::hideOptionsPanel()
 	ui->panel_1_Data->show();
 	ui->splitter->setSizes(sizes);
 }
+
 
 void MainWindow::showOptionsPanel()
 {
@@ -1503,6 +1627,7 @@ void MainWindow::showOptionsPanel()
 	_buttonPanel->move(ui->panel_2_Options->width() - _buttonPanel->width() - _scrollbarWidth, 0);
 }
 
+
 void MainWindow::showDataPanel()
 {
 	QList<int> sizes = ui->splitter->sizes();
@@ -1515,6 +1640,7 @@ void MainWindow::showDataPanel()
 	ui->panel_2_Options->setMaximumWidth(ui->panel_2_Options->minimumWidth());
 	ui->panel_1_Data->show();
 }
+
 
 void MainWindow::hideDataPanel()
 {
@@ -1534,6 +1660,7 @@ void MainWindow::hideDataPanel()
 	ui->splitter->setSizes(sizes);
 }
 
+
 void MainWindow::showVariablesPage()
 {
 	QList<int> datacurrentSizes = ui->data_splitter->sizes();
@@ -1547,6 +1674,7 @@ void MainWindow::showVariablesPage()
 		ui->data_splitter->setSizes(datacurrentSizes);
 	}
 }
+
 
 void MainWindow::analysisOKed()
 {
@@ -1569,6 +1697,7 @@ void MainWindow::analysisOKed()
 	hideOptionsPanel();
 }
 
+
 void MainWindow::analysisRunned()
 {
 	if (_currentAnalysis == NULL)
@@ -1579,6 +1708,7 @@ void MainWindow::analysisRunned()
 	else if (_currentAnalysis->status() == Analysis::InitedAndWaiting)
 		_currentAnalysis->scheduleRun();
 }
+
 
 void MainWindow::removeAnalysis(Analysis *analysis)
 {
@@ -1611,6 +1741,7 @@ void MainWindow::removeAnalysis(Analysis *analysis)
 		hideOptionsPanel();
 }
 
+
 void MainWindow::removeAllAnalyses()
 {
 	QMessageBox::StandardButton reply;
@@ -1627,6 +1758,7 @@ void MainWindow::removeAllAnalyses()
 	}
 }
 
+
 void MainWindow::refreshAllAnalyses()
 {
 	for (Analyses::iterator it = _analyses->begin(); it != _analyses->end(); ++it)
@@ -1636,6 +1768,7 @@ void MainWindow::refreshAllAnalyses()
 		analysis->refresh();
 	}
 }
+
 
 void MainWindow::refreshAnalysesUsingColumn(QString col)
 {
@@ -1647,10 +1780,12 @@ void MainWindow::refreshAnalysesUsingColumn(QString col)
 	_package->setModified(false);
 }
 
+
 void MainWindow::resetTableView()
 {
 	ui->tableView->reset();
 }
+
 
 void MainWindow::pushToClipboardHandler(const QString &mimeType, const QString &data, const QString &html)
 {
@@ -1670,6 +1805,7 @@ void MainWindow::pushToClipboardHandler(const QString &mimeType, const QString &
 
 	//qDebug() << clipboard->mimeData(QClipboard::Clipboard)->data("text/html");
 }
+
 
 void MainWindow::pushImageToClipboardHandler(const QByteArray &base64, const QString &html)
 {
@@ -1693,7 +1829,6 @@ void MainWindow::pushImageToClipboardHandler(const QByteArray &base64, const QSt
 #else
 		mimeData->setImageData(pm);
 #endif
-
 	}
 
 	if ( ! html.isEmpty())
@@ -1707,6 +1842,7 @@ void MainWindow::pushImageToClipboardHandler(const QByteArray &base64, const QSt
 
 	//qDebug() << clipboard->mimeData(QClipboard::Clipboard)->data("text/html");
 }
+
 
 void MainWindow::saveTempImageHandler(int id, QString path, QByteArray data)
 {
@@ -1723,10 +1859,12 @@ void MainWindow::saveTempImageHandler(int id, QString path, QByteArray data)
 	ui->webViewResults->page()->mainFrame()->evaluateJavaScript(eval);
 }
 
+
 void MainWindow::displayMessageFromResultsHandler(QString msg)
 {
 	QMessageBox::warning(this, "Results Warning", msg);
 }
+
 
 void MainWindow::showAnalysesMenuHandler(QString options)
 {
@@ -1793,7 +1931,6 @@ void MainWindow::showAnalysesMenuHandler(QString options)
 		}
 	}
 
-
 	if (menuOptions["hasRemove"].asBool())
 	{
 		_analysisMenu->addSeparator();
@@ -1818,11 +1955,13 @@ void MainWindow::showAnalysesMenuHandler(QString options)
 	_analysisMenu->show();
 }
 
+
 void MainWindow::removeAnalysisRequestHandler(int id)
 {
 	Analysis *analysis = _analyses->get(id);
 	removeAnalysis(analysis);
 }
+
 
 Json::Value MainWindow::getResultsMeta()
 {
@@ -1834,6 +1973,7 @@ Json::Value MainWindow::getResultsMeta()
 
 	return meta;
 }
+
 
 void MainWindow::getAnalysesUserData()
 {
@@ -1855,10 +1995,12 @@ void MainWindow::getAnalysesUserData()
 	}
 }
 
+
 void MainWindow::resultsDocumentChangedHandler()
 {
 	_package->setModified(true);
 }
+
 
 void MainWindow::simulatedMouseClickHandler(int x, int y, int count) {
 
@@ -1868,7 +2010,7 @@ void MainWindow::simulatedMouseClickHandler(int x, int y, int count) {
 		QMouseEvent * clickEvent = new QMouseEvent ((QEvent::MouseButtonDblClick), QPoint(x * _webViewZoom, y * _webViewZoom),
 			Qt::LeftButton,
 			Qt::LeftButton,
-			Qt::NoModifier   );
+			Qt::NoModifier);
 
 		qApp->postEvent((QObject*)ui->webViewResults,(QEvent *)clickEvent);
 
@@ -1880,18 +2022,19 @@ void MainWindow::simulatedMouseClickHandler(int x, int y, int count) {
 		QMouseEvent * clickEvent1 = new QMouseEvent ((QEvent::MouseButtonPress), QPoint(x * _webViewZoom, y * _webViewZoom),
 			Qt::LeftButton,
 			Qt::LeftButton,
-			Qt::NoModifier   );
+			Qt::NoModifier);
 
 		qApp->postEvent((QObject*)ui->webViewResults,(QEvent *)clickEvent1);
 
 		QMouseEvent * clickEvent2 = new QMouseEvent ((QEvent::MouseButtonRelease), QPoint(x * _webViewZoom, y * _webViewZoom),
 			Qt::LeftButton,
 			Qt::LeftButton,
-			Qt::NoModifier   );
+			Qt::NoModifier);
 
 		qApp->postEvent((QObject*)ui->webViewResults,(QEvent *)clickEvent2);
 	}
 }
+
 
 void MainWindow::updateUserDataHandler(int id, QString key)
 {
@@ -1904,10 +2047,12 @@ void MainWindow::collapseSelected()
 	ui->webViewResults->page()->mainFrame()->evaluateJavaScript("window.collapseMenuClicked();");
 }
 
+
 void MainWindow::removeSelected()
 {
 	ui->webViewResults->page()->mainFrame()->evaluateJavaScript("window.removeMenuClicked();");
 }
+
 
 void MainWindow::editTitleSelected()
 {
@@ -1915,11 +2060,13 @@ void MainWindow::editTitleSelected()
 	_package->setModified(true);
 }
 
+
 void MainWindow::copySelected()
 {
 	tempfiles_purgeClipboard();
 	ui->webViewResults->page()->mainFrame()->evaluateJavaScript("window.copyMenuClicked();");
 }
+
 
 void MainWindow::citeSelected()
 {
@@ -1927,10 +2074,12 @@ void MainWindow::citeSelected()
 	ui->webViewResults->page()->mainFrame()->evaluateJavaScript("window.citeMenuClicked();");
 }
 
+
 void MainWindow::saveImage()
 {
 	ui->webViewResults->page()->mainFrame()->evaluateJavaScript("window.saveImageClicked();");
 }
+
 
 void MainWindow::noteSelected()
 {
@@ -1942,16 +2091,19 @@ void MainWindow::noteSelected()
 	_package->setModified(true);
 }
 
+
 void MainWindow::menuHidding()
 {
 	ui->webViewResults->page()->mainFrame()->evaluateJavaScript("window.analysisMenuHidden();");
 }
+
 
 void MainWindow::scrollValueChangedHandle()
 {
 	if ( ! _analysisMenu->isHidden())
 		_analysisMenu->hide();
 }
+
 
 void MainWindow::analysisChangedDownstreamHandler(int id, QString options)
 {
@@ -2042,8 +2194,8 @@ void MainWindow::startDataEditorHandler()
 	}
 	else
 		startDataEditor(path);
-
 }
+
 
 void MainWindow::startDataEditorEventCompleted(FileEvent* event)
 {
@@ -2057,6 +2209,7 @@ void MainWindow::startDataEditorEventCompleted(FileEvent* event)
 		startDataEditor(event->path());
 	}
 }
+
 
 void MainWindow::startDataEditor(QString path)
 {

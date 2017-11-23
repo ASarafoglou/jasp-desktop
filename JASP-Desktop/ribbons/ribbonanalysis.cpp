@@ -33,11 +33,7 @@ RibbonAnalysis::RibbonAnalysis(QWidget *parent) :
 	addRibbonButton(ui->anovaButton);
 	addRibbonButton(ui->frequenciesButton);
 	addRibbonButton(ui->regressionButton);
-	addRibbonButton(ui->BFFromT);
 	addRibbonButton(ui->factoranalysisButton);
-
-	ui->BFFromT->setDataSetNotNeeded();
-
 
 //	connect(ui->Descriptives, SIGNAL(clicked()), this, SLOT(itemSelected()));
 
@@ -82,6 +78,7 @@ RibbonAnalysis::RibbonAnalysis(QWidget *parent) :
 
 	menu->addAction(QString("Correlation Matrix"), this, SLOT(itemSelected()))->setObjectName("Correlation");
 	menu->addAction(QString("Linear Regression"), this, SLOT(itemSelected()))->setObjectName("RegressionLinear");
+	menu->addAction(QString("Logistic Regression"), this, SLOT(itemSelected()))->setObjectName("RegressionLogistic");
 
 	menu->addSeparator();
 
@@ -99,7 +96,9 @@ RibbonAnalysis::RibbonAnalysis(QWidget *parent) :
 	menu = new QMenu(this);
 
 	menu->addAction(QString("Binomial Test"), this, SLOT(itemSelected()))->setObjectName("BinomialTest");
+#ifdef QT_DEBUG
 	menu->addAction(QString("Multinomial Test"), this, SLOT(itemSelected()))->setObjectName("MultinomialTest");
+#endif
 	menu->addAction(QString("Contingency Tables"), this, SLOT(itemSelected()))->setObjectName("ContingencyTables");
     menu->addAction(QString("Log-Linear Regression"), this, SLOT(itemSelected()))->setObjectName("RegressionLogLinear");
 
@@ -116,15 +115,6 @@ RibbonAnalysis::RibbonAnalysis(QWidget *parent) :
 	menu->addAction(QString("Exploratory Factor Analysis"), this, SLOT(itemSelected()))->setObjectName("ExploratoryFactorAnalysis");
 
 	ui->factoranalysisButton->setMenu(menu);
-
-#ifndef QT_DEBUG
-	ui->BFFromT->hide();
-#else
-	menu = new QMenu(this);
-	menu->addAction(QString("BF From t"), this, SLOT(itemSelected()))->setObjectName("BFFromT");
-
-	ui->BFFromT->setMenu(menu);
-#endif
 }
 
 RibbonAnalysis::~RibbonAnalysis()

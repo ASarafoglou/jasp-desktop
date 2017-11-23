@@ -1,4 +1,3 @@
-
 cache()
 
 TEMPLATE = subdirs
@@ -8,7 +7,8 @@ DESTDIR = .
 SUBDIRS += \
 	JASP-Common \
 	JASP-Engine \
-	JASP-Desktop \
+  JASP-Desktop
+
 #	JASP-Tests
 
 JASP-Desktop.depends = JASP-Common
