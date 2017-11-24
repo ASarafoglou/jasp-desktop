@@ -186,7 +186,7 @@ MultinomialTestBayesian <- function(dataset = NULL, options, perform = "run",
     t <- table(f)
     val <- t[unique(f)]
 
-    hyps <- .multinomialHypotheses(dataset, options, nlev) # only one hypothesis at the time
+    hyps <- .multinomialHypothesis(dataset, options, nlev) # only one hypothesis at the time
 
     # create a named list with bayesian multinomial result object
 
@@ -545,8 +545,8 @@ MultinomialTestBayesian <- function(dataset = NULL, options, perform = "run",
 
 }
 
-# Transform input into a list of hypotheses
-.multinomialHypotheses <- function(dataset, options, nlevels){
+# Transform input into a hypothesis object
+.multinomialHypothesis <- function(dataset, options, nlevels){
   # This function transforms the input into a hypothesis object
   hyps <- NULL
 
@@ -557,17 +557,17 @@ MultinomialTestBayesian <- function(dataset = NULL, options, perform = "run",
   } else {
 
     # First, generate a table with expected probabilities based on input
-    expectedDf <- .generateExpectedDf(dataset, options, nlevels)
+    eProbs <- .generateExpectedProbs(dataset, options, nlevels)
 
     # assign each hypothesis to the hyps object
-    hyps <- expectedDF
+    hyps <- eProbs
 
   }
   return(hyps)
 }
 
 # Parse expected probabilities/counts
-.generateExpectedDf <- function(dataset, options, nlevels){
+.generateExpectedProbs <- function(dataset, options, nlevels){
   # This function returns a vector of expected probabilities.
 
   if (options$exProbVar != ""){
