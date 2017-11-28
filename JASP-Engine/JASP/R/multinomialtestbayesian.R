@@ -165,7 +165,7 @@ MultinomialTestBayesian <- function(dataset = NULL, options, perform = "run",
 
 }
 
-# Run chi-square test and return object
+# Run Bayesian multinomial test and return object
 .bayesMultiomialTest <- function(dataset, options, factor, perform){
 
   bayesMultResults <- NULL
@@ -186,42 +186,67 @@ MultinomialTestBayesian <- function(dataset = NULL, options, perform = "run",
     t <- table(f)
     val <- t[unique(f)]
 
-    hyps <- .multinomialHypothesis(dataset, options, nlev) # only one hypothesis at the time
+    # prior concentration (based on user input)
+    if(options$priorConcentration == ''){
+      a <- rep(1, nlev)
+    } else {
+      a <- options$priorConcentration
+    }
+    
+    # create a named list with Bayesian multinomial result object
 
-    # create a named list with bayesian multinomial result object
-
-    bayesMultResults <- function(h){
-      # catch warning message and append to object if necessary
-      bmr  <- NULL
-      warn <- NULL
+    # Multinomial Test
+    if(options$hypothesis == 'bayesMultinomialTest' | options$hypothesis == 'bayesMultExpectedProbTest'){
       
-      h        <- h/sum(h)
-      a.prior  <- rep(1, length(h))                                       
+        # catch warning message and append to object if necessary
+        bmr  <- NULL
+        warn <- NULL
+        
+        # Extract hypothesis
+        if(options$hypothesis == 'bayesMultinomialTest'){
+          hyp     <- rep(1/nlev, nlev)
+        } else{
+          hyp <- .generateExpectedProbs(dataset, options, nlevels)
+        }
+        
+        # check if probabilities sum to 1
+        sumsToOne <- sum(hyps) == 1
+        if(sumsToOne == FALSE){
+          warn <- 'Probabilites were rescaled to sum to 1.'
+        }
+        
+        # calculate Savage-Dickey BF
+        beta.xa <- prod(gamma(val + a))/gamma(sum(val + a)) # Beta(x + a)
+        beta.a  <- prod(gamma(a))/gamma(sum(a))             # Beta(a)
+        prior     <- (1/beta.a)  * (prod(hyp^(a - 1)))
+        posterior <- (1/beta.xa) * (prod(hyp^((val + a) - 1)))
+        BF        <- prior/posterior
+        bmr       <- list(nlevels = length(h),
+                          BF      = BF)
+        bmr[["warn"]] <- warn
+        bayesMultResults <- bmr
+        
+    } else if(options$hypothesis == 'bayesMultOrderConstrTest'){
       
-      # check if probabilities sum to 1
-      sumToOne <- sum(h) == 1
-      if(sumToOne == FALSE){
-        warn <- 'Probabilites were rescaled to sum to 1.'
-      }
-      # calculate Savage-Dickey BF
-      beta.xa <- prod(gamma(val + a.prior))/gamma(sum(val + a.prior)) # Beta(x + a)
-      beta.a  <- prod(gamma(a.prior))/gamma(sum(a.prior))             # Beta(a)
-      prior     <- (1/beta.a)  * (prod(h^(a.prior - 1)))
-      posterior <- (1/beta.xa) * (prod(h^((val + a.prior) - 1)))
-      BF        <- prior/posterior
-
-      bmr <- list(nlevels = length(h),
-                  BF      = BF)
-      bmr[["warn"]] <- warn
-      return(bmr)
+      factorlevels <- levels(f)
+      # step 1: produce adjacency matrix and perform check (is check needed?)
+      A <- .toAmat(hyp, factorlevels)
+      A.check <- .isAsyclic(A)
+      # step 2: truncated sampling
+      post.samples <- .truncatedSampling(options$a, A, niter = options$niter)
+      # step 3: prepare samples for bridge sampling
+      # step 4: bridge sampling and calculation of Bayes factor
+      
     }
   }
 
-  # return the out object
+  # return the output object
   return(bayesMultResults)
 }
 
-# Transform chi-square test object into table for JASP
+
+
+# Transform Bayesian multinomial test object into table for JASP
 # bayesMultResults = list(H1 = obj, H2 = obj, ....)
 .bayesMultTable <- function(bayesMultResults, options, perform){
   table <- list()
@@ -545,27 +570,6 @@ MultinomialTestBayesian <- function(dataset = NULL, options, perform = "run",
 
 }
 
-# Transform input into a hypothesis object
-.multinomialHypothesis <- function(dataset, options, nlevels){
-  # This function transforms the input into a hypothesis object
-  hyps <- NULL
-
-  if (options$hypothesis == "bayesMultinomialTest"){
-    # Expected probabilities are simple now
-    hyps <- rep(1/nlevels, nlevels)
-
-  } else {
-
-    # First, generate a table with expected probabilities based on input
-    eProbs <- .generateExpectedProbs(dataset, options, nlevels)
-
-    # assign each hypothesis to the hyps object
-    hyps <- eProbs
-
-  }
-  return(hyps)
-}
-
 # Parse expected probabilities/counts
 .generateExpectedProbs <- function(dataset, options, nlevels){
   # This function returns a vector of expected probabilities.
@@ -587,3 +591,168 @@ MultinomialTestBayesian <- function(dataset = NULL, options, perform = "run",
   }
 
 }
+
+
+# Helper functions for the multinomial order constrained hypothesis test
+# Produce adjacency matrix
+.toAmat <- function(OR, factorlevels){
+  # input: character vector with order constrained hypothesis
+  # inputOrderRestrictions <- c('A', '<', 'B', '=', 'C', '=', 'H', '=', 
+  #                             'I', '<', 'E',',', 'F', '<', 'D', '<', 'X', 
+  #                             '=', 'Z')
+  # output: adjacency matrix
+  
+  otherConstraintsIndex <- which(stringr::str_detect(OR, '[,=]+'))
+  ORsplit <- OR[-otherConstraintsIndex]
+  orderConstraintsIndex <- which(stringr::str_detect(ORsplit, '[<]')) 
+  
+  # create object which encodes order constraints
+  ORvector <- NULL
+  lower <- c(1, orderConstraintsIndex + 1)
+  upper <- c(orderConstraintsIndex - 1, length(ORsplit))
+  for(i in 1:length(lower)){
+    ORvector[i] <- stringr::str_c(ORsplit[lower[i]:upper[i]], collapse = ',')
+  }
+  
+  # create object of vertices names
+  verticesNames <- stringr::str_c(OR, collapse = '')
+  verticesNames <- unlist(strsplit(verticesNames, '[,|<]+'))
+  verticesNames <- stringr::str_replace_all(verticesNames, "=", ",")    
+  # include all factor levels in verticesNames
+  for(i in seq_along(factorlevels)){
+    isElement <- any(grepl(factorlevels[i], verticesNames) == TRUE)
+    if(isElement == FALSE) verticesNames <- c(verticesNames, factorlevels[i])
+  }
+  
+  # construct and fill in adjacency matrix
+  nVertices <- length(verticesNames)
+  adjM <- matrix(0, ncol = nVertices, nrow = nVertices)
+  colnames(adjM) <- rownames(adjM) <- verticesNames
+  
+  # for every factor level
+  for(i in seq_along(factorlevels)){
+    # if factor level is order restricted
+    source <- factorlevels[i]
+    isOrderRestricted <- any(grepl(factorlevels[i], ORvector) == TRUE)
+    if(isOrderRestricted){
+      # find its sink
+      sourceIndex <- grep(factorlevels[i], verticesNames)
+      sink <- unlist(strsplit(ORvector[grep(factorlevels[i], ORvector) + 1], ','))
+      if(!any(is.na(sink))){
+        sinkIndex <- sapply(sink, function(x) grep(x, verticesNames))
+        # and fill out adjacency matrix
+        adjM[cbind(sourceIndex, sinkIndex)] <- 1
+      } 
+    }
+  }
+  return(adjM)
+}
+
+# Check adjacency matrix for transitivity
+.isAsyclic <- function(amat) {
+  
+  # input: adjacency matrix
+  # output: length 0 vector if it's acyclic (transitivity holds)
+  #         Vector of vertex names if intransitive
+  # algorithm based on
+  # https://math.stackexchange.com/questions/513288/test-for-acyclic-graph-property-based-on-adjacency-matrix
+  
+  v <- ncol(amat)
+  error <- FALSE
+  
+  for (i in 1:v) {
+    
+    d <- diag(amat %^% i)
+    if (any(d != 0)) {
+      error <- colnames(amat)[which(d!=0)]
+    } 
+    error <- stringr::str_c(error, collapse = ',')
+  }
+  
+  
+  if(error != FALSE){
+    output <- paste('Error. Order restriction not possible in:', error, sep = ' ')
+  } else {
+    output <- TRUE
+  }
+  
+  return(output)
+}
+
+# Do truncated sampling
+.truncatedSampling <- function(a, A = matrix(NA, ncol=length(a)), niter = 1e6) {
+  # input: a = prior or posterior Dirichlet paramters (can be either)
+  #        A = Adjacency matrix containing order restrictions
+  # output: posterior samples from truncated dirichlet distribution
+  
+  nburnin <- 10 
+  
+  allParameterNames <- strsplit(colnames(A), ',')
+  nEquals           <- sapply(allParameterNames, length)
+  equalities        <- which(stringr::str_count(colnames(A)) != 1)
+  # postSamples       <- matrix(ncol=length(unlist(allParameterNames)), nrow = niter + nburnin)
+  # colnames(postSamples) <- unlist(allParameterNames)
+  postSamples <- matrix(ncol=ncol(A), nrow = (niter + nburnin))
+  colnames(postSamples) <- colnames(A)
+  # starting values of Gibbs Sampler
+  k  <- ncol(A)
+  z  <- rgamma(k, a, 1)
+  iteration <- 0
+  
+  for(iter in 1:(niter+nburnin)){
+    
+    for(i in 1:k){
+      
+      # 1. if parameter is unrestricted
+      #    (no entry in ith row or column of A),
+      #    sample from unrestricted gammadistribution
+      if(sum(A[,i])==0 & sum(A[i,])==0){
+        z[i] <- rgamma(1, a[i], 1)
+        
+        # 2. if parameter is has order constraints
+        #    sample from truncated gamma distribution
+      } else {
+        
+        v <- runif(1, 0, exp(-z[i]))
+        
+        # Lo: lower bound
+        Lo <- 0
+        # check for lower bound
+        if(1 %in% A[,i]){
+          # check for accompaning lower bound (in column)
+          smallerValue <- which(A[,i] == 1)
+          Lo           <- max(z[smallerValue])
+        }
+        # Hi: upper bound
+        Hi <- -log(v)
+        # check for a upper bound (in row)
+        if(1 %in% A[i,]) {
+          # check for accompaning upper bound (denoted as 1 in ith column of A)
+          biggerValue <- which(A[i,] == 1)
+          Hi <- min(z[biggerValue], Hi)
+        }
+        
+        z[i] <- (runif(1)*(Hi^a[i] - Lo^a[i]) + Lo^a[i])^{1/a[i]}
+      }
+    }
+    
+    #  zAll <- rep(z, nEquals)
+    
+    # 4. transform Gammato Dirichlet samples
+    # postSamples[iter,] <- zAll/sum(zAll)
+    postSamples[iter,] <- z/sum(z)
+    
+    # show progress
+    if (iter %% 100000 == 0) {
+      iteration <- iteration + 1
+      print(iteration)
+    }
+  }
+  postSamples <- t(apply(postSamples, 1, function(x) x/nEquals))
+  postSamples <- postSamples[-(1:nburnin), ]
+  return(postSamples)
+}
+
+# To Do: Move parameters to real line 
+# To Do: Perform bridge sampling 
+
