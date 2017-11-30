@@ -244,8 +244,6 @@ MultinomialTestBayesian <- function(dataset = NULL, options, perform = "run",
   return(bayesMultResults)
 }
 
-
-
 # Transform Bayesian multinomial test object into table for JASP
 # bayesMultResults = list(H1 = obj, H2 = obj, ....)
 .bayesMultTable <- function(bayesMultResults, options, perform){
@@ -320,7 +318,7 @@ MultinomialTestBayesian <- function(dataset = NULL, options, perform = "run",
 }
 
 # Create multinomial descriptives table
-.multinomialDescriptives <- function(bayesMultResults, factor, options, perform) {
+.multinomialDescriptivesTable <- function(bayesMultResults, factor, options, perform) {
   if (options[["countProp"]]=="descCounts"){
     numberType = list(type="integer")
   } else {
@@ -472,7 +470,7 @@ MultinomialTestBayesian <- function(dataset = NULL, options, perform = "run",
   return(table)
 }
 
-# Create multinomial descriptives plot
+# Create multinomial descriptives plot, histogram
 .multinomialbayesDescriptivesPlot <- function(bayesMultResults, options, perform) {
 
   # init output object
@@ -591,7 +589,6 @@ MultinomialTestBayesian <- function(dataset = NULL, options, perform = "run",
   }
 
 }
-
 
 # Helper functions for the multinomial order constrained hypothesis test
 # Produce adjacency matrix
@@ -755,4 +752,122 @@ MultinomialTestBayesian <- function(dataset = NULL, options, perform = "run",
 
 # To Do: Move parameters to real line 
 # To Do: Perform bridge sampling 
+
+.multinomialPosteriorPlot <- function(factor, options, run, medianPlusHDI, nlevels){
+  # plots the posterior parameter estimates against either the prior distribution
+  # or against the posterior distribution of the encompassing model
+
+  # Initialisation plot
+  .initSplitPlot <- function(){
+    plot(1, type='n', xlim=0:1, ylim=0:1, bty='n', axes=FALSE, xlab="",
+         ylab="")
+    axis(2, at=0:1, labels=FALSE, cex.axis= 1.4, ylab="")
+    mtext(text = 'Parameter estimates', side = 1, cex=1.5, line = 3)
+  }
+
+  # Plot
+  posteriorPlot <- list()
+  
+  if (run == FALSE){
+    
+    image <- .writeImage(width = options$plotWidth, height = options$plotHeight,
+                         plot = .initPosteriorPlot, obj = FALSE)
+    posteriorPlot[["data"]] <- image[["png"]]
+    
+  } else {
+  
+  model1 <- medianPlusHDI[['Model1']]
+  posterior <- medianPlusHDI[['Posterior']]
+  level.names <- levels(factor)
+
+  x.breaks <- pretty(c(min(model1$lower, posterior$lower), max(model1$upper, posterior$upper)), 5)
+  d.y <- data.frame(y=-Inf, yend=-Inf, x=1, xend=nlevels)
+  d.x <- data.frame(x=-Inf, xend=-Inf, y=x.breaks[1], yend=x.breaks[length(x.breaks)])
+  
+  p <- ggplot2::ggplot(posterior, aes(x = 1:nlevels, 
+                             y = posterior$median, 
+                          ymin = posterior$lower, 
+                          ymax = posterior$upper
+                          )) + 
+    ggplot2::scale_y_continuous('Parameter estimates' , breaks = x.breaks) +
+    ggplot2::scale_x_continuous(name = '', breaks = 1:nlevels, labels = level.names, limits = c(1,nlevels)) +
+    ggplot2::coord_flip() + 
+    ggplot2::geom_segment(data=d.x, ggplot2::aes(x=x, y=y, xend=xend, yend=yend),
+                          size = 0.75,
+                          inherit.aes=FALSE) +
+    ggplot2::geom_segment(data=d.y, ggplot2::aes(x=x, y=y, xend=xend, yend=yend),
+                          size = 0.75,
+                          inherit.aes=FALSE) +
+    ggplot2::geom_ribbon(aes(ymin=model1$lower, ymax=model1$upper), alpha = .9, fill = 'lightgrey') +
+    ggplot2::geom_ribbon(aes(ymin=posterior$lower, ymax=posterior$upper), alpha = .6, fill = 'grey36') +
+    ggplot2::geom_pointrange() + 
+    ggplot2::geom_point(shape = 21, color = "black", fill = "grey", size = 4.5) +
+    ggplot2::theme_classic(base_size = 20) + 
+    ggplot2::theme(axis.line = element_blank())
+  
+  image <- .writeImage(width = options$plotWidth,
+                       height = options$plotHeight,
+                       plot = p)
+  
+  posteriorPlot[["data"]] <- image[["png"]]
+  posteriorPlot[["obj"]] <- image[["obj"]]
+  posteriorPlot[["convertible"]] <- TRUE
+  posteriorPlot[["status"]] <- "complete"
+  
+  }
+ 
+    return(posteriorPlot)
+}
+# calculation of median and highest density interval
+.multinomialCredibleIntervalPlusMedian <- function(ciInterval = .95, a, counts, nlevels, 
+                                                   model1.samples = NULL, post.samples = NULL) {
+  # input : user input CI interval (default = .95)
+  # a     : user input prior concentration as specified by user
+  # counts: user input counts per category
+  # post.samples: if user specified order constrained hypothesis
+  # model1.samples: if user specified order constrained hypothesis
+  
+  output <- list(Model1 = data.frame(lower = NA, median = NA, upper = NA), 
+                 Posterior = data.frame(lower = NA, median = NA, upper = NA))
+  lower <- (1 - ciInterval) / 2
+  upper <- 1 - lower
+  N     <- sum(counts)
+  A     <- sum(a)
+  
+  # Model 1 (e.g., prior samples or posterior samples from encompassing model)
+  # equality constrained hypothesis: median and CI are calculated analytically
+  if(is.null(model1.samples)){
+    for(i in 1:nlevels){
+      d <- qbeta(c(lower, .5, upper), a[i] + counts[i] , N - counts[i] + A - a[i])
+      output[['Model1']][i,] <- d
+    }
+  # order-constrained hypothesis: median and CI are based on posterior samples  
+  } else {
+    for(i in 1:nlevels){
+      d <- quantile(model1.samples[,i], c(lower, 0.5, upper))
+      output[['Model1']][i,] <- d
+    }
+  }
+  
+  # Posterior
+  # equality constrained hypothesis: median and CI are calculated analytically
+  if(is.null(post.samples)){
+    for(i in 1:nlevels){
+      d <- qbeta(c(lower, .5, upper), a[i] + counts[i] , N - counts[i] + A - a[i])
+      output[['Posterior']][i,] <- d
+    }
+    # order-constrained hypothesis: median and CI are based on posterior samples  
+  } else {
+    for(i in 1:nlevels){
+      d <- quantile(post.samples[,i], c(lower, 0.5, upper))
+      output[['Posterior']][i,] <- d
+    }
+  }
+  return(output)
+}
+
+
+
+
+
 
