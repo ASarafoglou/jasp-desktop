@@ -230,8 +230,7 @@ MultinomialTestBayesian <- function(dataset = NULL, options, perform = "run",
       
       factorlevels <- levels(f)
       # step 1: produce adjacency matrix and perform check (is check needed?)
-      A <- .toAmat(hyp, factorlevels)
-      A.check <- .isAsyclic(A)
+      A <- .toAdjacencyMatrix(hyp, factorlevels)
       # step 2: truncated sampling
       post.samples <- .truncatedSampling(options$a, A, niter = options$niter)
       # step 3: prepare samples for bridge sampling
@@ -592,7 +591,7 @@ MultinomialTestBayesian <- function(dataset = NULL, options, perform = "run",
 
 # Helper functions for the multinomial order constrained hypothesis test
 # Produce adjacency matrix
-.toAmat <- function(OR, factorlevels){
+.toAdjacencyMatrix <- function(OR, factorlevels){
   # input: character vector with order constrained hypothesis
   # inputOrderRestrictions <- c('A', '<', 'B', '=', 'C', '=', 'H', '=', 
   #                             'I', '<', 'E',',', 'F', '<', 'D', '<', 'X', 
@@ -643,37 +642,6 @@ MultinomialTestBayesian <- function(dataset = NULL, options, perform = "run",
     }
   }
   return(adjM)
-}
-
-# Check adjacency matrix for transitivity
-.isAsyclic <- function(amat) {
-  
-  # input: adjacency matrix
-  # output: length 0 vector if it's acyclic (transitivity holds)
-  #         Vector of vertex names if intransitive
-  # algorithm based on
-  # https://math.stackexchange.com/questions/513288/test-for-acyclic-graph-property-based-on-adjacency-matrix
-  
-  v <- ncol(amat)
-  error <- FALSE
-  
-  for (i in 1:v) {
-    
-    d <- diag(amat %^% i)
-    if (any(d != 0)) {
-      error <- colnames(amat)[which(d!=0)]
-    } 
-    error <- stringr::str_c(error, collapse = ',')
-  }
-  
-  
-  if(error != FALSE){
-    output <- paste('Error. Order restriction not possible in:', error, sep = ' ')
-  } else {
-    output <- TRUE
-  }
-  
-  return(output)
 }
 
 # Do truncated sampling
