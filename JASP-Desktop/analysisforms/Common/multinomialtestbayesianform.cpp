@@ -57,6 +57,8 @@ MultinomialTestBayesianForm::MultinomialTestBayesianForm(QWidget *parent) :
 	ui->assignExProbVar->setSourceAndTarget(ui->listAvailableVariables, ui->exProbVar);
 
 	ui->tableView->setVisible(false);
+	ui->orderWidget->setVisible(false);
+	ui->priorTab->setVisible(false);
 
 
 #ifdef QT_NO_DEBUG

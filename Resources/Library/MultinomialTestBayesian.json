@@ -28,16 +28,41 @@
       "type": "List"
     },
 		{
-			"name": "descriptivesPlot",
+			"name": "descriptives",
+			"type": "Boolean",
+			"default": false
+		},
+		{
+			"name": "credibleInterval",
+			"type": "Boolean",
+			"default": false
+		},
+		{
+			"format": "%",
+			"max": 0.999,
+			"min": 0.001,
+			"name": "credibleIntervalInterval",
+			"type": "Number",
+			"value": 0.950
+		},
+		{
+			"name": "bayesDescriptivesPlot",
 			"type": "Boolean"
 		},
 		{
 			"format": "%",
 			"max": 0.999,
 			"min": 0.001,
-			"name": "descriptivesPlotConfidenceInterval",
+			"name": "bayesDescriptivesPlotcredibleInterval",
 			"type": "Number",
 			"value": 0.950
+		},
+		{
+			"max": 5,
+			"min": 0.001,
+			"name": "priorConcentration",
+			"type": "Number",
+			"value": 1
 		},
 		{
 			"default": false,

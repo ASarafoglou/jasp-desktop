@@ -21,7 +21,7 @@ MultinomialTest <- function(dataset = NULL, options, perform = "run",
   # First, we load the variables into the R environment
   factor <- NULL
   asnum <- NULL
-  if (options$factor != "") {
+  if (options$factor != ""){
     factor <- options$factor
     if (options$counts != "") {
       asnum <- options$counts

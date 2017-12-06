@@ -113,7 +113,7 @@ MultinomialTestBayesian <- function(dataset = NULL, options, perform = "run",
   if (options[["descriptives"]]) {
     # Generate descriptives table
     if (is.null(bayesDescriptivesTable)) {
-      bayesDescriptivesTable <- .multinomialDescriptives(bayesMultResults, factor, options, perform)
+      bayesDescriptivesTable <- .bayesMultinomialDescriptives(bayesMultResults, factor, options, perform)
     }
 
     results[["bayesDescriptivesTable"]] <- bayesDescriptivesTable
@@ -166,7 +166,7 @@ MultinomialTestBayesian <- function(dataset = NULL, options, perform = "run",
 }
 
 # Run Bayesian multinomial test and return object
-.bayesMultiomialTest <- function(dataset, options, factor, perform){
+.bayesMultinomialTest <- function(dataset, options, factor, perform){
 
   bayesMultResults <- NULL
 
@@ -192,29 +192,29 @@ MultinomialTestBayesian <- function(dataset = NULL, options, perform = "run",
     } else {
       a <- options$priorConcentration
     }
-    
+
     # create a named list with Bayesian multinomial result object
 
     # Multinomial Test
     if(options$hypothesis == 'bayesMultinomialTest' | options$hypothesis == 'bayesMultExpectedProbTest'){
-      
+
         # catch warning message and append to object if necessary
         bmr  <- NULL
         warn <- NULL
-        
+
         # Extract hypothesis
         if(options$hypothesis == 'bayesMultinomialTest'){
           hyp     <- rep(1/nlev, nlev)
         } else{
           hyp <- .generateExpectedProbs(dataset, options, nlevels)
         }
-        
+
         # check if probabilities sum to 1
         sumsToOne <- sum(hyps) == 1
         if(sumsToOne == FALSE){
           warn <- 'Probabilites were rescaled to sum to 1.'
         }
-        
+
         # calculate Savage-Dickey BF
         beta.xa <- prod(gamma(val + a))/gamma(sum(val + a)) # Beta(x + a)
         beta.a  <- prod(gamma(a))/gamma(sum(a))             # Beta(a)
@@ -225,9 +225,9 @@ MultinomialTestBayesian <- function(dataset = NULL, options, perform = "run",
                           BF      = BF)
         bmr[["warn"]] <- warn
         bayesMultResults <- bmr
-        
+
     } else if(options$hypothesis == 'bayesMultOrderConstrTest'){
-      
+
       factorlevels <- levels(f)
       # step 1: produce adjacency matrix and perform check (is check needed?)
       A <- .toAdjacencyMatrix(hyp, factorlevels)
@@ -235,7 +235,7 @@ MultinomialTestBayesian <- function(dataset = NULL, options, perform = "run",
       post.samples <- .truncatedSampling(options$a, A, niter = options$niter)
       # step 3: prepare samples for bridge sampling
       # step 4: bridge sampling and calculation of Bayes factor
-      
+
     }
   }
 
@@ -252,11 +252,11 @@ MultinomialTestBayesian <- function(dataset = NULL, options, perform = "run",
 
   # include fields
   fields <- list(
-    list(name="case", title="", type="string", combine=TRUE),
-    list(name="chisquare", title="\u03C7\u00B2", type = "integer", format = "sf:4;dp:3"),
-    list(name="df", title="df", type="integer"),
-    list(name="p", title="p", type="number", format="dp:3;p:.001")
-    )
+    list(name="case", title="", type="string"),
+    list(name="nlevels", title="levels", type = "integer"),
+    list(name="n", title="n", type="integer", format="sf:4;dp:3"),
+    list(name="bf", title="Bayes factor", type="number", format="sf:4;dp:3")
+  )
 
   # include footnotes
 
@@ -264,60 +264,38 @@ MultinomialTestBayesian <- function(dataset = NULL, options, perform = "run",
 
   message <- list()
 
-  for(r in 1:length(bayesMultResults)){
-
-    if(!is.null(bayesMultResults[[r]][["warn"]])) {
-
-      message[[r]] <- bayesMultResults[[r]][["warn"]]
-      .addFootnote(footnotes, symbol="<em>Note.</em>", text=message)
-    }
-  }
-
-  table[["footnotes"]] <- as.list(footnotes)
 
   # fill in results one row at a time
   if (!is.null(bayesMultResults)){
 
-  for(r in 1:length(bayesMultResults)){
-      table[["data"]][[r]] <- list(case = names(bayesMultResults)[r],
-                                   chisquare = bayesMultResults[[r]][["statistic"]][["X-squared"]],
-                                   df = bayesMultResults[[r]][["parameter"]][["df"]],
-                                   p = bayesMultResults[[r]][["p.value"]])
+  for (r in 1:length(bayesMultResults)) {
 
-      if (options$VovkSellkeMPR){
-        for (row in 1:length(table[["data"]])){
-          table[["data"]][[row]][["VovkSellkeMPR"]] <- .VovkSellkeMPR(table[["data"]][[row]][["p"]])
-        }
-      }
-      table[["status"]] <- "complete"
+    if(!is.null(bayesMultResults[[r]][["warn"]])) {
+
+      message[[r]] <- bayesMultResults[[r]][["warn"]]
+      .addFootnote(footnotes, symbol="<em>Note.</em>", text = message)
     }
+
+    table[["data"]][[r]] <- list(case = names(bayesMultResults)[r],
+                                 nlevels = bayesMultResults[[r]][["nlevels"]],
+                                 n = bayesMultResults[[r]][["n"]],
+                                 bf = bayesMultResults[[r]][["bf"]])
+
+    table[["status"]] <- "complete"
+  }
+
+  table[["footnotes"]] <- as.list(footnotes)
 
   } else {
     # init state?
-    data <- list()
-
-    if(is.null(bayesMultResults[[r]])){
-      htables <- ""
-    }
-    # for (h in htables){
-    #   if (options$VovkSellkeMPR){
-    #     data[[length(data) + 1]] <- list(case=h, chisquare=".", df=".", p=".",
-    #                                      VovkSellkeMPR=".", lowerCI=".",
-    #                                      upperCI=".")
-    #   } else {
-    #     data[[length(data) + 1]] <- list(case=h, chisquare=".", df=".", p=".",
-    #                                      lowerCI=".", upperCI=".")
-    #   }
-    #  }
-
-    table[["data"]] <- data
+    table[["data"]] <- list(list(case = ".", nlevels = ".", n = ".", bf = "."))
   }
 
   return(table)
 }
 
 # Create multinomial descriptives table
-.multinomialDescriptivesTable <- function(bayesMultResults, factor, options, perform) {
+.bayesMultinomialDescriptives <- function(bayesMultResults, factor, options, perform) {
   if (options[["countProp"]]=="descCounts"){
     numberType = list(type="integer")
   } else {
@@ -593,15 +571,15 @@ MultinomialTestBayesian <- function(dataset = NULL, options, perform = "run",
 # Produce adjacency matrix
 .toAdjacencyMatrix <- function(OR, factorlevels){
   # input: character vector with order constrained hypothesis
-  # inputOrderRestrictions <- c('A', '<', 'B', '=', 'C', '=', 'H', '=', 
-  #                             'I', '<', 'E',',', 'F', '<', 'D', '<', 'X', 
+  # inputOrderRestrictions <- c('A', '<', 'B', '=', 'C', '=', 'H', '=',
+  #                             'I', '<', 'E',',', 'F', '<', 'D', '<', 'X',
   #                             '=', 'Z')
   # output: adjacency matrix
-  
+
   otherConstraintsIndex <- which(stringr::str_detect(OR, '[,=]+'))
   ORsplit <- OR[-otherConstraintsIndex]
-  orderConstraintsIndex <- which(stringr::str_detect(ORsplit, '[<]')) 
-  
+  orderConstraintsIndex <- which(stringr::str_detect(ORsplit, '[<]'))
+
   # create object which encodes order constraints
   ORvector <- NULL
   lower <- c(1, orderConstraintsIndex + 1)
@@ -609,22 +587,22 @@ MultinomialTestBayesian <- function(dataset = NULL, options, perform = "run",
   for(i in 1:length(lower)){
     ORvector[i] <- stringr::str_c(ORsplit[lower[i]:upper[i]], collapse = ',')
   }
-  
+
   # create object of vertices names
   verticesNames <- stringr::str_c(OR, collapse = '')
   verticesNames <- unlist(strsplit(verticesNames, '[,|<]+'))
-  verticesNames <- stringr::str_replace_all(verticesNames, "=", ",")    
+  verticesNames <- stringr::str_replace_all(verticesNames, "=", ",")
   # include all factor levels in verticesNames
   for(i in seq_along(factorlevels)){
     isElement <- any(grepl(factorlevels[i], verticesNames) == TRUE)
     if(isElement == FALSE) verticesNames <- c(verticesNames, factorlevels[i])
   }
-  
+
   # construct and fill in adjacency matrix
   nVertices <- length(verticesNames)
   adjM <- matrix(0, ncol = nVertices, nrow = nVertices)
   colnames(adjM) <- rownames(adjM) <- verticesNames
-  
+
   # for every factor level
   for(i in seq_along(factorlevels)){
     # if factor level is order restricted
@@ -638,7 +616,7 @@ MultinomialTestBayesian <- function(dataset = NULL, options, perform = "run",
         sinkIndex <- sapply(sink, function(x) grep(x, verticesNames))
         # and fill out adjacency matrix
         adjM[cbind(sourceIndex, sinkIndex)] <- 1
-      } 
+      }
     }
   }
   return(adjM)
@@ -649,9 +627,9 @@ MultinomialTestBayesian <- function(dataset = NULL, options, perform = "run",
   # input: a = prior or posterior Dirichlet paramters (can be either)
   #        A = Adjacency matrix containing order restrictions
   # output: posterior samples from truncated dirichlet distribution
-  
-  nburnin <- 10 
-  
+
+  nburnin <- 10
+
   allParameterNames <- strsplit(colnames(A), ',')
   nEquals           <- sapply(allParameterNames, length)
   equalities        <- which(stringr::str_count(colnames(A)) != 1)
@@ -663,23 +641,23 @@ MultinomialTestBayesian <- function(dataset = NULL, options, perform = "run",
   k  <- ncol(A)
   z  <- rgamma(k, a, 1)
   iteration <- 0
-  
+
   for(iter in 1:(niter+nburnin)){
-    
+
     for(i in 1:k){
-      
+
       # 1. if parameter is unrestricted
       #    (no entry in ith row or column of A),
       #    sample from unrestricted gammadistribution
       if(sum(A[,i])==0 & sum(A[i,])==0){
         z[i] <- rgamma(1, a[i], 1)
-        
+
         # 2. if parameter is has order constraints
         #    sample from truncated gamma distribution
       } else {
-        
+
         v <- runif(1, 0, exp(-z[i]))
-        
+
         # Lo: lower bound
         Lo <- 0
         # check for lower bound
@@ -696,17 +674,17 @@ MultinomialTestBayesian <- function(dataset = NULL, options, perform = "run",
           biggerValue <- which(A[i,] == 1)
           Hi <- min(z[biggerValue], Hi)
         }
-        
+
         z[i] <- (runif(1)*(Hi^a[i] - Lo^a[i]) + Lo^a[i])^{1/a[i]}
       }
     }
-    
+
     #  zAll <- rep(z, nEquals)
-    
+
     # 4. transform Gammato Dirichlet samples
     # postSamples[iter,] <- zAll/sum(zAll)
     postSamples[iter,] <- z/sum(z)
-    
+
     # show progress
     if (iter %% 100000 == 0) {
       iteration <- iteration + 1
@@ -718,8 +696,8 @@ MultinomialTestBayesian <- function(dataset = NULL, options, perform = "run",
   return(postSamples)
 }
 
-# To Do: Move parameters to real line 
-# To Do: Perform bridge sampling 
+# To Do: Move parameters to real line
+# To Do: Perform bridge sampling
 
 .multinomialPosteriorPlot <- function(factor, options, run, medianPlusHDI, nlevels){
   # plots the posterior parameter estimates against either the prior distribution
@@ -735,15 +713,15 @@ MultinomialTestBayesian <- function(dataset = NULL, options, perform = "run",
 
   # Plot
   posteriorPlot <- list()
-  
+
   if (run == FALSE){
-    
+
     image <- .writeImage(width = options$plotWidth, height = options$plotHeight,
                          plot = .initPosteriorPlot, obj = FALSE)
     posteriorPlot[["data"]] <- image[["png"]]
-    
+
   } else {
-  
+
   model1 <- medianPlusHDI[['Model1']]
   posterior <- medianPlusHDI[['Posterior']]
   level.names <- levels(factor)
@@ -751,15 +729,15 @@ MultinomialTestBayesian <- function(dataset = NULL, options, perform = "run",
   x.breaks <- pretty(c(min(model1$lower, posterior$lower), max(model1$upper, posterior$upper)), 5)
   d.y <- data.frame(y=-Inf, yend=-Inf, x=1, xend=nlevels)
   d.x <- data.frame(x=-Inf, xend=-Inf, y=x.breaks[1], yend=x.breaks[length(x.breaks)])
-  
-  p <- ggplot2::ggplot(posterior, aes(x = 1:nlevels, 
-                             y = posterior$median, 
-                          ymin = posterior$lower, 
+
+  p <- ggplot2::ggplot(posterior, aes(x = 1:nlevels,
+                             y = posterior$median,
+                          ymin = posterior$lower,
                           ymax = posterior$upper
-                          )) + 
+                          )) +
     ggplot2::scale_y_continuous('Parameter estimates' , breaks = x.breaks) +
     ggplot2::scale_x_continuous(name = '', breaks = 1:nlevels, labels = level.names, limits = c(1,nlevels)) +
-    ggplot2::coord_flip() + 
+    ggplot2::coord_flip() +
     ggplot2::geom_segment(data=d.x, ggplot2::aes(x=x, y=y, xend=xend, yend=yend),
                           size = 0.75,
                           inherit.aes=FALSE) +
@@ -768,40 +746,40 @@ MultinomialTestBayesian <- function(dataset = NULL, options, perform = "run",
                           inherit.aes=FALSE) +
     ggplot2::geom_ribbon(aes(ymin=model1$lower, ymax=model1$upper), alpha = .9, fill = 'lightgrey') +
     ggplot2::geom_ribbon(aes(ymin=posterior$lower, ymax=posterior$upper), alpha = .6, fill = 'grey36') +
-    ggplot2::geom_pointrange() + 
+    ggplot2::geom_pointrange() +
     ggplot2::geom_point(shape = 21, color = "black", fill = "grey", size = 4.5) +
-    ggplot2::theme_classic(base_size = 20) + 
+    ggplot2::theme_classic(base_size = 20) +
     ggplot2::theme(axis.line = element_blank())
-  
+
   image <- .writeImage(width = options$plotWidth,
                        height = options$plotHeight,
                        plot = p)
-  
+
   posteriorPlot[["data"]] <- image[["png"]]
   posteriorPlot[["obj"]] <- image[["obj"]]
   posteriorPlot[["convertible"]] <- TRUE
   posteriorPlot[["status"]] <- "complete"
-  
+
   }
- 
+
     return(posteriorPlot)
 }
 # calculation of median and highest density interval
-.multinomialCredibleIntervalPlusMedian <- function(ciInterval = .95, a, counts, nlevels, 
+.multinomialCredibleIntervalPlusMedian <- function(ciInterval = .95, a, counts, nlevels,
                                                    model1.samples = NULL, post.samples = NULL) {
   # input : user input CI interval (default = .95)
   # a     : user input prior concentration as specified by user
   # counts: user input counts per category
   # post.samples: if user specified order constrained hypothesis
   # model1.samples: if user specified order constrained hypothesis
-  
-  output <- list(Model1 = data.frame(lower = NA, median = NA, upper = NA), 
+
+  output <- list(Model1 = data.frame(lower = NA, median = NA, upper = NA),
                  Posterior = data.frame(lower = NA, median = NA, upper = NA))
   lower <- (1 - ciInterval) / 2
   upper <- 1 - lower
   N     <- sum(counts)
   A     <- sum(a)
-  
+
   # Model 1 (e.g., prior samples or posterior samples from encompassing model)
   # equality constrained hypothesis: median and CI are calculated analytically
   if(is.null(model1.samples)){
@@ -809,14 +787,14 @@ MultinomialTestBayesian <- function(dataset = NULL, options, perform = "run",
       d <- qbeta(c(lower, .5, upper), a[i] + counts[i] , N - counts[i] + A - a[i])
       output[['Model1']][i,] <- d
     }
-  # order-constrained hypothesis: median and CI are based on posterior samples  
+  # order-constrained hypothesis: median and CI are based on posterior samples
   } else {
     for(i in 1:nlevels){
       d <- quantile(model1.samples[,i], c(lower, 0.5, upper))
       output[['Model1']][i,] <- d
     }
   }
-  
+
   # Posterior
   # equality constrained hypothesis: median and CI are calculated analytically
   if(is.null(post.samples)){
@@ -824,7 +802,7 @@ MultinomialTestBayesian <- function(dataset = NULL, options, perform = "run",
       d <- qbeta(c(lower, .5, upper), a[i] + counts[i] , N - counts[i] + A - a[i])
       output[['Posterior']][i,] <- d
     }
-    # order-constrained hypothesis: median and CI are based on posterior samples  
+    # order-constrained hypothesis: median and CI are based on posterior samples
   } else {
     for(i in 1:nlevels){
       d <- quantile(post.samples[,i], c(lower, 0.5, upper))
@@ -833,9 +811,3 @@ MultinomialTestBayesian <- function(dataset = NULL, options, perform = "run",
   }
   return(output)
 }
-
-
-
-
-
-
