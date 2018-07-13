@@ -44,7 +44,7 @@ FocusScope
 
 					Image
 					{
-						source: "../images/filter.png"
+						source: "../icons/filter.png"
 						anchors.top: parent.top
 						anchors.bottom: parent.bottom
 						anchors.horizontalCenter: parent.horizontalCenter
@@ -359,7 +359,7 @@ FocusScope
 					anchors.margins: columnIsFiltered ? 1 : 0
 					anchors.verticalCenter: parent.verticalCenter
 
-					source: "../images/filter.png"
+					source: "../icons/filter.png"
 					sourceSize.width:  headerRoot.__iconDim
 					sourceSize.height:  headerRoot.__iconDim
 
