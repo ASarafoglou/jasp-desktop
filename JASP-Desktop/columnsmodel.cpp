@@ -62,11 +62,6 @@ void ColumnsModel::setDataSet(DataSet *dataSet)
 	endResetModel();
 }
 
-int ColumnsModel::numRows()
-{
-	return _dataSet->rowCount();
-}
-
 void ColumnsModel::refreshColumn(Column * column)
 {
 	int rowChanged = _dataSet->getColumnIndex(column->name());
