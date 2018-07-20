@@ -29,13 +29,15 @@ QVariant FactorsModel::data(const QModelIndex &index, int role) const
 		return QVariant();
 	}
 
-	Column & col=_dataSet->column(index.row());
+	qDebug() << ">>>> ---------------------";
+	qDebug() << QString::number(index.row());
+	qDebug() << ">>>> ---------------------";
+
+	// Column & col=_dataSet->column(index.row());
 
         // return QString::fromStdString(col.name());
 
-	qDebug() << "___________________________";
-	qDebug() << _labels;
-	qDebug() << "___________________________";
+
 
 	if(role == NameRole)
         return _labels.at(index.row());
@@ -63,8 +65,13 @@ void FactorsModel::setDataSet(DataSet *dataSet)
 
 void FactorsModel::setFactors(QStringList labels)
 {
+
+	qDebug() << "___________________________";
+	qDebug() << labels;
+	qDebug() << "___________________________";
+
 	beginResetModel();
-   _labels = labels;
+	_labels = labels;
 	endResetModel();
 }
 
