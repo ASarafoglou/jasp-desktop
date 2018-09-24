@@ -10,7 +10,7 @@ ListView {
 
     delegate: MouseArea {
 
-        width : orientation === ListView.Horizontal ? elementLoader.width : ListView.view.width
+        width : orientation === ListView.Horizontal ? elementLoader.width  : ListView.view.width
         height: orientation === ListView.Horizontal ? ListView.view.height : elementLoader.height
         z     : 5
 
