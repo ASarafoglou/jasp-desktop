@@ -1175,7 +1175,6 @@ void MainWindow::dataSetIOCompleted(FileEvent *event)
 			updateMenuEnabledDisabledStatus();
 			ui->webViewResults->reload();
 			setWindowTitle("JASP");
-			setFilterConstructorJson();
 
 			if (_applicationExiting)
 				QApplication::exit();
