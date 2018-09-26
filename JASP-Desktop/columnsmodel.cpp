@@ -20,17 +20,20 @@ QVariant ColumnsModel::data(const QModelIndex &index, int role) const
 		default:										return "";
 		}
 	else if(role == ToolTipRole)
-		return QString("The '") + QString::fromStdString(col.name()) + "'-column " + (col.columnType() == Column::ColumnType::ColumnTypeScale ? "which can be used in numerical comparisons" : "which can only be used in (in)equivalence comparisons");
+	{
+		QString usedIn = col.columnType() == Column::ColumnType::ColumnTypeScale ? "which can be used in numerical comparisons" : col.columnType() == Column::ColumnType::ColumnTypeOrdinal ? "which can only be used in (in)equivalence, greater and lesser than comparisons" : "which can only be used in (in)equivalence comparisons";
+		return QString("The '") + QString::fromStdString(col.name()) + "'-column " + usedIn;
+	}
 
 	return QVariant();
 }
 
 QHash<int, QByteArray> ColumnsModel::roleNames() const {
 	static const auto roles = QHash<int, QByteArray>{
-		{ NameRole,			"columnName"},
-		{ TypeRole,			"type"},
-		{ IconSourceRole,	"columnIcon"},
-		{ ToolTipRole,		"toolTip"}
+		{ NameRole,					"columnName"},
+		{ TypeRole,					"type"},
+		{ IconSourceRole,			"columnIcon"},
+		{ ToolTipRole,				"toolTip"}
 	};
 
 	return roles;

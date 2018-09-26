@@ -15,7 +15,8 @@ CONFIG   -= app_bundle
 
 TEMPLATE = app
 
-exists(/app/lib/*)	{ INSTALLPATH = /app/bin } else	{
+exists(/app/lib/*)	{ INSTALLPATH = /app/bin
+ } else	{
 	INSTALLPATH = /usr/bin
 }
 
@@ -28,7 +29,9 @@ INSTALLS += analysis_jsons
 
 DEPENDPATH = ..
 PRE_TARGETDEPS += ../JASP-Common
-LIBS +=  -l$$JASP_R_INTERFACE_NAME -L.. -lJASP-Common
+
+unix: PRE_TARGETDEPS += ../JASP-Common
+LIBS += -L.. -l$$JASP_R_INTERFACE_NAME -lJASP-Common
 
 include(../R_HOME.pri) #needed to build r-packages
 
@@ -47,22 +50,16 @@ linux {
 	else				{ LIBS += -larchive -lboost_filesystem -lboost_system }
 }
 
+linux: LIBS += -L$$_R_HOME/lib -lR -lrt # because linux JASP-R-Interface is staticlib
+macx:  LIBS += -L$$_R_HOME/lib -lR
 
 
 macx {
 	INCLUDEPATH += ../../boost_1_64_0
 }
 
-
 windows {
-	contains(QT_ARCH, i386) {
-		ARCH = i386
-	} else {
-		ARCH = x64
-	}
-
 	INCLUDEPATH += ../../boost_1_64_0
-
 }
 
 INCLUDEPATH += $$PWD/../JASP-Common/
@@ -76,23 +73,24 @@ macx:QMAKE_CXXFLAGS += -stdlib=libc++
 win32:QMAKE_CXXFLAGS += -DBOOST_USE_WINDOWS_H -DNOMINMAX -D__WIN32__ -DBOOST_INTERPROCESS_BOOTSTAMP_IS_SESSION_MANAGER_BASED
 
 win32:LIBS += -lole32 -loleaut32
+macx:LIBS += -L$$_R_HOME/lib -lR
 
 mkpath($$OUT_PWD/../R/library)
 
 exists(/app/lib/*) {
 	#for flatpak we can just use R's own library as it is contained anyway
-	InstallJASPRPackage.commands		= \"$$R_EXE\" CMD INSTALL $$PWD/JASP
+  InstallJASPRPackage.commands        = \"$$R_EXE\" CMD INSTALL $$PWD/JASP
 	InstallJASPgraphsRPackage.commands	= \"$$R_EXE\" CMD INSTALL $$PWD/JASPgraphs
 } else {
-	InstallJASPRPackage.commands		= \"$$R_EXE\" CMD INSTALL --library=$$OUT_PWD/../R/library $$PWD/JASP
-	InstallJASPgraphsRPackage.commands	= \"$$R_EXE\" CMD INSTALL --library=$$OUT_PWD/../R/library $$PWD/JASPgraphs
+  InstallJASPRPackage.commands        = \"$$R_EXE\" CMD INSTALL --library=$$OUT_PWD/../R/library $$PWD/JASP
+  InstallJASPgraphsRPackage.commands  = \"$$R_EXE\" CMD INSTALL --library=$$OUT_PWD/../R/library $$PWD/JASPgraphs
 }
 
-QMAKE_EXTRA_TARGETS += InstallJASPRPackage
-PRE_TARGETDEPS      += InstallJASPRPackage
 QMAKE_EXTRA_TARGETS += InstallJASPgraphsRPackage
-PRE_TARGETDEPS      += InstallJASPgraphsRPackage
+POST_TARGETDEPS     += InstallJASPgraphsRPackage
 
+QMAKE_EXTRA_TARGETS += InstallJASPRPackage
+POST_TARGETDEPS     += InstallJASPRPackage
 
 QMAKE_CLEAN += $$OUT_PWD/../R/library/*
 
@@ -160,3 +158,7 @@ OTHER_FILES  += \
 	JASP/R/ttestonesample.R \
 	JASP/R/ttestpairedsamples.R \
 	JASP/R/networkanalysis.R
+
+DISTFILES += \
+    JASP/DESCRIPTION \
+    JASP/NAMESPACE

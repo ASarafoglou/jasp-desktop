@@ -21,14 +21,19 @@ Item
 
 	property var dragKeys: booleanReturningFunctions.indexOf(functionName) >= 0 ? ["boolean"] : [ "number" ]
 
+	readonly property bool isMean: functionName === "mean"
+	readonly property bool isAbs:  functionName === "abs"
+	readonly property bool isRoot: functionName === "sqrt"
+	readonly property bool drawMeanSpecial: false
+	readonly property bool showParentheses: !drawMeanSpecial && (parameterNames.length > 1 || isAbs || functionImageSource === "")
+
+	property real extraMeanWidth: (drawMeanSpecial ? 10 : 0)
+
+	property var addNARMFunctions: ["mean", "sd", "var", "sum", "prod", "min", "max", "mean", "round", "median"]
+	property string extraParameterCode: addNARMFunctions.indexOf(functionName) >= 0 ? ", na.rm=TRUE" : ""
+
 	height: meanBar.height + Math.max(dropRow.height, filterConstructor.blockDim)
 	width: functionDef.width + haakjesLinks.width + dropRow.width + haakjesRechts.width + extraMeanWidth
-	property real extraMeanWidth: (functionName === "mean" ? 10 : 0)
-
-	readonly property bool showParentheses: functionName !== "mean" && (parameterNames.length > 1 || functionName === "abs" || functionImageSource === "")
-    readonly property bool isRoot: functionName === "sqrt"
-    readonly property bool isMean: functionName === "mean"
-    readonly property bool isAbs:  functionName === "abs"
 
 	function shouldDrag(mouseX, mouseY)
 	{
@@ -45,22 +50,21 @@ Item
 		for(var i=0; i<funcRoot.parameterNames.length; i++)
 				compounded += (i > 0 ? ", " : "") + (dropRepeat.itemAt(i) === null ? "null" : dropRepeat.itemAt(i).returnR())
 
-		compounded += ")"
+		compounded += extraParameterCode + ")"
 
 		return compounded
 	}
 
-	function returnEmptyRightMostDropSpot()		{ return dropRepeat.rightMostEmptyDropSpot() }
-	function returnFilledRightMostDropSpot()	{ return dropRepeat.leftMostFilledDropSpot() }
+	function returnEmptyRightMostDropSpot()		{ return dropRepeat.rightMostEmptyDropSpot()	}
+	function returnFilledRightMostDropSpot()	{ return dropRepeat.leftMostFilledDropSpot()	}
 	function checkCompletenessFormulas()		{ return dropRepeat.checkCompletenessFormulas() }
-	function convertToJSON()					{ return dropRepeat.convertToJSON()	}
-
+	function convertToJSON()					{ return dropRepeat.convertToJSON()				}
 	function getParameterDropSpot(param)		{ return dropRepeat.getParameterDropSpot(param) }
 
 	Item
 	{
 		id: meanBar
-        visible: funcRoot.isMean || funcRoot.isRoot
+		visible: funcRoot.drawMeanSpecial || funcRoot.isRoot
         height: visible ? 6 : 0
 
         anchors.left: funcRoot.isRoot ? functionDef.right : parent.left
@@ -100,7 +104,7 @@ Item
 			verticalAlignment: Text.AlignVCenter
 			horizontalAlignment: Text.AlignHCenter
 
-            text: funcRoot.isMean || funcRoot.isAbs || funcRoot.isRoot ? "" : functionName
+			text: funcRoot.drawMeanSpecial || funcRoot.isAbs || funcRoot.isRoot ? "" : functionName
 			font.pixelSize: filterConstructor.fontPixelSize
 
 			visible: !functionImg.visible
@@ -252,9 +256,10 @@ Item
 			function checkCompletenessFormulas()
 			{
 				var allComplete = true
-				for(var i=0; i<funcRoot.parameterNames.length; i++)
-					if(!dropRepeat.itemAt(i).getDropSpot().checkCompletenessFormulas())
+				for(var i=0; i<dropRepeat.count; i++)
+					if(!dropRepeat.itemAt(i).checkCompletenessFormulas())
 						allComplete = false
+
 				return allComplete
 			}
 
@@ -305,6 +310,11 @@ Item
 
 				function getDropSpot() { return spot }
 
+				function checkCompletenessFormulas()
+				{
+					return spot.checkCompletenessFormulas()
+				}
+
 
 
 				DropSpot {
@@ -319,7 +329,7 @@ Item
 					defaultText: funcRoot.parameterNames[index]
 					dropKeys: funcRoot.parameterDropKeys[index]
 
-					droppedShouldBeNested: funcRoot.parameterNames.length === 1 && functionName !== "abs" && functionName !== "mean"
+					droppedShouldBeNested: funcRoot.parameterNames.length === 1 && !funcRoot.isAbs && !funcRoot.drawMeanSpecial
 					shouldShowX: funcRoot.parameterNames <= 1
 				}
 

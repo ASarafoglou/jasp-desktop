@@ -1,422 +1,427 @@
 import QtQuick 2.9
-import QtQuick.Controls 2.3
-import QtQuick.Controls 1.4
+import QtQuick.Controls 1.4 as Old
+import QtQuick.Controls 2.2
 import QtGraphicalEffects 1.0
 
 FocusScope
 {
     id: __myRoot
-    readonly property int __iconDim: 16
-    readonly property int __headerHeight: 20
 
-    property var headersGradient: Gradient{
-		GradientStop { position: 0.2; color: "lightGrey" }
-		GradientStop { position: 1.0; color: "white" }
-    }
+	signal doubleClicked()
 
-    Rectangle
-    {
-        id: filterToggleButton
+	Rectangle
+	{
+		color: "white"
+		anchors.fill: parent
+		z: -1
 
-        width: dataSetTableView.extraSpaceLeft + 1
-        height: __myRoot.__headerHeight + 1
-        anchors.left: parent.left
-        anchors.top: parent.top
-        z: 5
+		JASPDataView
+		{
+			focus: __myRoot.focus
 
-        LinearGradient
-        {
+			id: dataTableView
+			anchors.top: parent.top
+			anchors.left: parent.left
+			anchors.right: parent.right
+			anchors.bottom: dataStatusBar.top
 
-            cached: true
-            anchors.fill: parent
-            start: Qt.point(parent.width * 0.5, parent.height * 0.5)
-            end: Qt.point(parent.width, parent.height)
-            gradient: headersGradient
-        }
+			//headersGradient: myHeadersGradient
+			model: dataSetModel
 
-        Rectangle
-        {
-            anchors.fill: parent
-            border.width: 1
-            border.color: systemPalette.mid
-            color: "transparent"
-            z: 6
-        }
+			onDoubleClicked: __myRoot.doubleClicked()
 
-        Image
-        {
-            source: "../images/filter.png"
-            width: __myRoot.__iconDim
-            height: __myRoot.__iconDim
-            x: parent.x + (parent.width / 2) - (width / 2)
-            y: parent.y + (parent.height / 2) - (height / 2)
-        }
-
-        MouseArea
-        {
-            id: filterToggleButtonMouseArea
-            anchors.fill: parent
-            onClicked: filterWindow.toggle()
-            hoverEnabled: true
-            onEntered: filterToggleButtonToolTip.visible = true
-            onExited: filterToggleButtonToolTip.visible = false
-        }
-
-        ToolTip
-        {
-             id: filterToggleButtonToolTip
-			 text: filterWindow.opened ? "Hide filtering functionality" : "Show filtering functionality"
-            // target: filterToggleButton
-             visible: false
-         }
-
-    }
-
-    TableViewJasp {
-        id: dataSetTableView
-        objectName: "dataSetTableView"
-
-        anchors.top: parent.top
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: dataStatusBar.top
-
-        alternatingRowColors: false
-        property bool drawCellBorders: true
-
-
-        model: dataSetModel
-
-		readonly property var columnTypeAndIconPath: dataSetModel.getColumnTypesWithCorrespondingIcon()
-
-        function clearColumns()
-        {
-            dataSetTableView.removeAllColumns()
-        }
-        
-        function reloadColumns()
-        {
-            clearColumns();
-
-            var roleList = dataSetModel.userRoleNames();
-
-            //data.clear()
-            for(var i=0; i<roleList.length; i++)
-                data.push(dataSetTableView.addColumn(columnComponent.createObject(dataSetTableView, { "role": roleList[i], "title": dataSetModel.columnTitle(i)}))) //should use headerData instead of columnTitle.
-
-            resizeColumnsWithHeader()
-        }
-
-        Component { id: columnComponent; TableViewColumn { movable: false } }
-
-
-        function resizeColumnsWithHeader()
-        {
-			var extraPaddingTitle = 55
-            for(var col=0; col<columnCount; col++)
-            {
-                var title = dataSetModel.columnTitle(col)
-				var minimumWidth = calculateMinimumRequiredColumnWidthTitle(col, title, extraPaddingTitle, 1000)
-                var column = getColumn(col)
-                column.width = minimumWidth
-            }
-
-            //Try to find a reasonable size for our ugly rownumberthing:
-            var modelCount = dataSetModel.rowCount()
-            var tempCalc = rowNumberSizeCalcComponent.createObject(dataSetTableView, { "text": modelCount})
-            var extraSpaceShouldBe = tempCalc.width + 4
-            tempCalc.destroy()
-            extraSpaceLeft = extraSpaceShouldBe
-        }
-
-        Component { id: rowNumberSizeCalcComponent; TextMetrics { } }
-
-        signal dataTableDoubleClicked()
-
-        onDoubleClicked:  dataSetTableView.dataTableDoubleClicked()
-
-
-        headerDelegate: Rectangle
-        {
-            //Two rectangles to show a border of exactly 1px around cells
-            id: headerBorderRectangle
-            color: systemPalette.mid
-            border.width: 0
-            radius: 0
-            height: __myRoot.__headerHeight
-
-            property real iconTextPadding: 10
-
-            Rectangle
-            {
-                id: colHeader
-                //gradient: headersGradient
-                LinearGradient
-                {
-                    cached: true
-                    anchors.fill: parent
-                    start: Qt.point(colHeader.width * 0.5, 0)
-                    end: Qt.point(colHeader.width * 0.5, colHeader.height)
-                    gradient: headersGradient
-                }
-
-                /*readonly property bool isFirst: styleData.column == 0
-                x: isFirst ? headerBorderRectangle.x - dataSetTableView.extraSpaceLeft : headerBorderRectangle.x
-                width: isFirst ? headerBorderRectangle.width - 1 + dataSetTableView.extraSpaceLeft : headerBorderRectangle.width - 1*/
-
-                x: headerBorderRectangle.x
-                width: headerBorderRectangle.width - 1
-
-                y: headerBorderRectangle.y
-                height: headerBorderRectangle.height - 1
-
-
-                Image
-                {
-                    id: colIcon
-                    anchors.top: colHeader.top
-                    anchors.bottom: colHeader.bottom
-                    anchors.left: colHeader.left
-                    anchors.leftMargin: 4
-
-                    property int myColumnType: dataSetModel.columnIcon(styleData.column)
-					source: dataSetTableView.columnTypeAndIconPath[myColumnType]
-                    width: styleData.column > -1 ? __myRoot.__iconDim : 0
-                    height:  __myRoot.__iconDim
-
-
-                    function setColumnType(columnType)
-                    {
-                        colIcon.myColumnType = dataSetModel.setColumnTypeFromQML(styleData.column, columnType)
-
-						if(variablesWindow.chosenColumn === styleData.column && colIcon.myColumnType === columnTypeScale)
-                            variablesWindow.chooseColumn(-1)
-
-
-                    }
-
-                    MouseArea
-                    {
-                        anchors.fill: parent
-                        onClicked: if(styleData.column > -1) popupIcons.open()
-                    }
-
-
-                    Popup {
-                        id: popupIcons; modal: true; focus: true;
-                        padding: 2 * 1
-                        y: colIcon.y + colIcon.height
-                        x: colIcon.x - (__myRoot.__iconDim * 0.5)
-
-                        closePolicy: Popup.CloseOnPressOutside | Popup.CloseOnEscape
-
-                        TextMetrics { id: nominalTextMeasure; text: "Nominal"}
-
-                        Column
-                        {
-                            width: parent.width
-                            spacing: popupIcons.padding / 2
-
-                            Repeater{
-                                id: iconRepeater
-								model: [columnTypeScale, columnTypeOrdinal, columnTypeNominal]
-
-                                Button
-                                {
-                                    id: columnTypeChangeIcon
-									iconSource: dataSetTableView.columnTypeAndIconPath[iconRepeater.model[index]]
-
-                                    width: __myRoot.__iconDim * 2.5 + nominalTextMeasure.width
-
-                                    readonly property bool showThisTypeIcon: true // !((index == colIcon.myColumnType) || (index == columnTypes.columnTypeNominal && colIcon.myColumnType == columnTypes.columnTypeNominalText))
-                                    height: showThisTypeIcon ? __myRoot.__iconDim * 1.5 : 0
-
-									text: iconRepeater.model[index] === columnTypeScale ? "Scale" : ( iconRepeater.model[index] === columnTypeOrdinal ? "Ordinal" : "Nominal")
-
-
-                                    onClicked: columnTypeChosen()
-
-                                    function columnTypeChosen()
-                                    {
-										var columnType = iconRepeater.model[index]
-                                        popupIcons.close()
-                                        colIcon.setColumnType(columnType)
-                                        filterWindow.sendFilter()
-
-                                    }
-
-                                }
-                            }
-                        }
-                    }
-                }
-
-
-				Item
+			leftTopCornerItem:
+				Rectangle
 				{
-					id: headerItem
-					anchors.top: colHeader.top
-					anchors.left: colIcon.right
-					anchors.right: colHeader.right
-					anchors.bottom: colHeader.bottom
-					anchors.rightMargin: 2
+					id: filterToggleButton
+					gradient: Gradient{	GradientStop { position: 0.0;	color: "#EEEEEE" }	GradientStop { position: 0.75;	color: "#EEEEEE" }
+										GradientStop { position: 1.0;	color: "#DDDDDD" }	GradientStop { position: 0.77;	color: "#DDDDDD" }	}
 
-					Text
-					{
-						id: headerText
-						anchors.top: headerItem.top
-						anchors.left: headerItem.left
-						//anchors.right: colFilterOn.left
-						anchors.bottom: headerItem.bottom
-
-						text: styleData.value //dataSetModel.columnTitle(styleData.column);
-						leftPadding: headerBorderRectangle.iconTextPadding
-						rightPadding: colFilterOn.thisColumnIsFiltered ? headerBorderRectangle.iconTextPadding * 0.5 : 0
-
-
-					}
+					ToolTip.text: filterWindow.opened ? "Hide filter" : "Show filter"
+					ToolTip.timeout: 4500
+					ToolTip.delay: 500
+					ToolTip.visible: filterToggleButtonMouseArea.containsMouse
 
 					Image
 					{
-						id: colFilterOn
-						anchors.top: headerItem.top
-						anchors.left: headerText.right
-						//anchors.right: parent.right
-						anchors.bottom: headerItem.bottom
-
-						readonly property bool thisColumnIsFiltered: dataSetModel.columnsFilteredCount, dataSetModel.columnHasFilter(styleData.column)
-
-						anchors.margins: thisColumnIsFiltered ? 1 : 0
-
 						source: "../images/filter.png"
-						width: thisColumnIsFiltered ? __myRoot.__iconDim : 0
-						height:  __myRoot.__iconDim
+						anchors.top: parent.top
+						anchors.bottom: parent.bottom
+						anchors.horizontalCenter: parent.horizontalCenter
+
+						anchors.margins: 4
+
+						sourceSize.width: width
+						sourceSize.height: height
+						width: height
 
 					}
 
 					MouseArea
 					{
-						anchors.fill: headerItem
-						onClicked:
-						{
-							var chooseThisColumn = (styleData.column > -1 && dataSetModel.columnIcon(styleData.column)  !== columnTypeScale) ? styleData.column : -1
-							variablesWindow.chooseColumn(chooseThisColumn)
+						id: filterToggleButtonMouseArea
+						anchors.fill: parent
+						onClicked: filterWindow.toggle()
+						hoverEnabled: true
+						cursorShape: containsMouse ? Qt.PointingHandCursor : Qt.ArrowCursor
+					}
+				}
 
+			CreateComputeColumnDialog { id: createComputeDialog	}
+
+			extraColumnItem:
+				Rectangle
+				{
+					id: addColumnButton
+
+					width: 40
+
+					gradient: Gradient{	GradientStop { position: 0.0;	color: "#EEEEEE" }	GradientStop { position: 0.75;	color: "#EEEEEE" }
+										GradientStop { position: 1.0;	color: "#DDDDDD" }	GradientStop { position: 0.77;	color: "#DDDDDD" }	}
+
+					ToolTip.text: "Add computed column"
+					ToolTip.timeout: 4500
+					ToolTip.delay: 500
+					ToolTip.visible: addColumnButtonMouseArea.containsMouse
+
+					Image
+					{
+						source: "/icons/addition.png"
+						anchors.top: parent.top
+						anchors.bottom: parent.bottom
+						anchors.horizontalCenter: parent.horizontalCenter
+
+						anchors.margins: 4
+
+						sourceSize.width: width
+						sourceSize.height: height
+						width: height
+
+					}
+
+					MouseArea
+					{
+						id: addColumnButtonMouseArea
+						anchors.fill: parent
+						onClicked: createComputeDialog.open()
+						hoverEnabled: true
+						cursorShape: containsMouse ? Qt.PointingHandCursor : Qt.ArrowCursor
+					}
+
+
+				}
+
+			rowNumberDelegate:
+				Rectangle
+				{
+					gradient: Gradient{	GradientStop { position: 0.0;	color: "#EEEEEE" }	GradientStop { position: 0.75;	color: "#EEEEEE" }
+										GradientStop { position: 0.77;	color: "#DDDDDD" }	GradientStop { position: 1.0;	color: "#DDDDDD" }	}
+					Text { text: rowIndex; anchors.centerIn: parent }
+				}
+
+			columnHeaderDelegate: Rectangle
+			{
+				id: headerRoot
+				property real iconTextPadding: 10
+				readonly property int __iconDim: 16
+
+				Image
+				{
+					id: colIcon
+					anchors.verticalCenter: parent.verticalCenter
+					anchors.left: parent.left
+					anchors.margins: 4
+
+					function myColumnType() {return dataSetModel.columnIcon(columnIndex)}
+
+					source: dataSetModel.getColumnTypesWithCorrespondingIcon()[myColumnType()]
+					width:	headerRoot.__iconDim
+					height: headerRoot.__iconDim
+
+
+					function setColumnType(columnType)
+					{
+						//colIcon.myColumnType =
+						dataSetModel.setColumnTypeFromQML(columnIndex, columnType)
+
+						if(variablesWindow.chosenColumn === columnIndex && colIcon.myColumnType() === columnTypeScale)
+							variablesWindow.chooseColumn(-1)
+
+
+					}
+
+					MouseArea
+					{
+						anchors.fill: parent
+						onClicked: if(columnIndex > -1) popupIcons.open()
+
+						hoverEnabled: true
+						ToolTip.visible: containsMouse
+						ToolTip.text: "Click here to change columntype"
+						ToolTip.timeout: 3000
+						ToolTip.delay: 500
+						cursorShape: containsMouse ? Qt.PointingHandCursor : Qt.ArrowCursor
+
+					}
+
+
+					Popup {
+						id: popupIcons; modal: true; focus: true;
+						padding: 8
+						spacing: 4
+						y: colIcon.y + colIcon.height
+						x: colIcon.x - (headerRoot.__iconDim * 0.5)
+
+						closePolicy: Popup.CloseOnPressOutside | Popup.CloseOnEscape
+
+
+						Column
+						{
+							//width: parent.width
+							spacing: popupIcons.padding / 2
+
+							Repeater{
+								id: iconRepeater
+								model: columnIsComputed ? [columnTypeScale, columnTypeOrdinal, columnTypeNominal, columnTypeNominalText] :  [columnTypeScale, columnTypeOrdinal, columnTypeNominal] //these are set in the rootcontext in mainwindow!
+
+								Rectangle
+								{
+									id: columnTypeChangeIcon
+
+									width: 90
+									height: headerRoot.__iconDim * 1.5
+									radius: 15
+
+									color: popupIconMouseArea.useThisColor
+
+									Item
+									{
+										width: (popupIconImage.width + popupText.width)
+										height: headerRoot.__iconDim
+										anchors.verticalCenter: parent.verticalCenter
+										anchors.left: parent.left
+										anchors.leftMargin: 10
+
+										Image
+										{
+											id: popupIconImage
+
+											anchors.verticalCenter: parent.verticalCenter
+
+											source: dataSetModel.getColumnTypesWithCorrespondingIcon()[iconRepeater.model[index]]
+											width:	headerRoot.__iconDim
+											height: headerRoot.__iconDim
+											sourceSize.width:	width
+											sourceSize.height:	height
+										}
+
+										Text
+										{
+											id: popupText
+											text: iconRepeater.model[index] === columnTypeScale ? "Scale" : iconRepeater.model[index] === columnTypeOrdinal ? "Ordinal" : iconRepeater.model[index] === columnTypeNominal ? "Nominal" : "Text"
+
+											anchors.left: popupIconImage.right
+											anchors.leftMargin: 10
+										}
+									}
+
+									MouseArea
+									{
+										id: popupIconMouseArea
+										anchors.fill: parent
+
+										hoverEnabled: true
+										cursorShape: containsMouse ? Qt.PointingHandCursor : Qt.ArrowCursor
+
+										property color useThisColor: containsMouse ? "lightGray" : "transparent"
+
+										onClicked:
+										{
+											var columnType = iconRepeater.model[index]
+											popupIcons.close()
+											colIcon.setColumnType(columnType)
+										}
+									}
+								}
+							}
 						}
 					}
 				}
 
-            }
-        }
+				Image
+				{
+					id: colIsComputed
+
+					anchors.left: colIcon.right
+					anchors.verticalCenter: parent.verticalCenter
+
+					anchors.margins: visible ? 1 : 0
+
+					source: "../icons/computed.png"
+					sourceSize.width:  headerRoot.__iconDim * 2
+					sourceSize.height:  headerRoot.__iconDim * 2
+
+					width: visible ? headerRoot.__iconDim : 0
+					height:  headerRoot.__iconDim
+					visible: columnIsComputed
+
+					MouseArea
+					{
+						anchors.fill: parent
+						onClicked: computeColumnWindow.open(dataSetModel.headerData(columnIndex, Qt.Horizontal))
+
+						hoverEnabled: true
+						ToolTip.visible: containsMouse
+						ToolTip.text: "Click here to change the columns formulas"
+						ToolTip.timeout: 3000
+						ToolTip.delay: 500
+						cursorShape: containsMouse ? Qt.PointingHandCursor : Qt.ArrowCursor
+
+					}
+				}
+
+				Text
+				{
+					id: headerTextItem
+
+					text: headerText
+
+					horizontalAlignment: Text.AlignHCenter
+
+					anchors.horizontalCenter: headerRoot.horizontalCenter
+					anchors.verticalCenter: headerRoot.verticalCenter
+				}
 
 
-        itemDelegate: Item
-        {
-            id: itemItem
 
-            readonly property bool rowIsUsed: dataSetModel.getRowFilter(styleData.row)
-
-			Rectangle
-			{
-				id: borderRectangle
-				color: "transparent"
+				gradient: Gradient{	GradientStop { position: 0.0;	color: "#EEEEEE" }	GradientStop { position: 0.75;	color: "#EEEEEE" }
+									GradientStop { position: 0.77;	color: "#DDDDDD" }	GradientStop { position: 1.0;	color: "#DDDDDD" }	}
 
 
-				border.width:   dataSetTableView.drawCellBorders ? 1 : 0
-				border.color:  styleData.selected ? systemPalette.dark :systemPalette.mid
-				radius: 0
-				width: parent.width + 1
-				height: parent.height + 1
-				x: parent.x - 1
-				y: parent.y - 1
-				visible: itemItem.rowIsUsed || styleData.selected
+
+
+
+				AnimatedImage
+				{
+					id: colIsInvalidated
+
+					anchors.right: colFilterOn.left
+					anchors.verticalCenter: parent.verticalCenter
+
+
+					anchors.margins: visible ? 1 : 0
+
+					source: "../icons/loading.gif"
+					width: visible ? headerRoot.__iconDim : 0
+					height:  headerRoot.__iconDim
+					playing: visible
+					visible: columnIsInvalidated
+				}
+
+				Image
+				{
+					id: colHasError
+
+					anchors.right: colIsInvalidated.left
+					anchors.verticalCenter: parent.verticalCenter
+					anchors.margins: visible ? 1 : 0
+
+					source: "../icons/error.png"
+					sourceSize.width:  headerRoot.__iconDim
+					sourceSize.height:  headerRoot.__iconDim
+
+					width: columnError.length > 0 ? headerRoot.__iconDim : 0
+					height:  headerRoot.__iconDim
+					visible: columnError.length > 0 // && !columnIsInvalidated
+
+					MouseArea
+					{
+						anchors.fill: parent
+						onClicked: computeColumnWindow.open(dataSetModel.headerData(columnIndex, Qt.Horizontal))
+
+						hoverEnabled: true
+						ToolTip.visible: containsMouse && columnError.length > 0
+						ToolTip.text: columnError
+						ToolTip.timeout: 3000
+						ToolTip.delay: 500
+						cursorShape: containsMouse ? Qt.PointingHandCursor : Qt.ArrowCursor
+
+					}
+
+				}
+
+
+				Image
+				{
+					id: colFilterOn
+
+					anchors.right: parent.right
+					anchors.margins: columnIsFiltered ? 1 : 0
+					anchors.verticalCenter: parent.verticalCenter
+
+					source: "../images/filter.png"
+					sourceSize.width:  headerRoot.__iconDim
+					sourceSize.height:  headerRoot.__iconDim
+
+					width: columnIsFiltered ? headerRoot.__iconDim : 0
+					height:  headerRoot.__iconDim
+
+				}
+
+
+
+				MouseArea
+				{
+					anchors.left: colIsComputed.right
+					anchors.top: parent.top
+					anchors.bottom: parent.bottom
+					anchors.right: colHasError.left
+					onClicked:
+					{
+						var chooseThisColumn = (columnIndex > -1 && dataSetModel.columnIcon(columnIndex)  !== columnTypeScale) ? columnIndex : -1
+						variablesWindow.chooseColumn(chooseThisColumn)
+
+						if(columnIndex >= 0 && dataSetModel.columnUsedInEasyFilter(columnIndex))
+						{
+							filterWindow.showEasyFilter = true
+							filterWindow.open()
+						}
+
+					}
+
+					hoverEnabled: true
+					ToolTip.visible: containsMouse && dataSetModel.columnIcon(columnIndex)  !== columnTypeScale
+					ToolTip.text: "Click here to change labels" + (columnIsFiltered ? " or inspect filter" : "" )
+					ToolTip.timeout: 3000
+					ToolTip.delay: 500
+					cursorShape: containsMouse && dataSetModel.columnIcon(columnIndex)  !== columnTypeScale ? Qt.PointingHandCursor : Qt.ArrowCursor
+				}
 			}
+		}
 
-			Rectangle
+		Rectangle
+		{
+			id: dataStatusBar
+			objectName: "dataStatusBar"
+			anchors.left: parent.left
+			anchors.right: parent.right
+			anchors.bottom: parent.bottom
+
+			color: "#EEEEEE"
+			border.color: "lightGrey"
+			border.width: 1
+
+			height: datafiltertatusText.text.length > 0 ? datafiltertatusText.contentHeight + 16 : 0
+
+			Text
 			{
-				//we need this annoying rectangle to make the letters look normal because otherwise it draws them twice for some reason..
-				id: backgroundRectangle
-				color: styleData.selected ? systemPalette.dark :  (styleData.alternate && dataSetModel.getRowFilter(styleData.row) ? systemPalette.midlight : systemPalette.light)
-
-
-				border.width:  0
-				border.color:  systemPalette.mid
-				radius: 0
-				width: parent.width - 1
-				height: parent.height - 1
-				x: parent.x
-				y: parent.y
-			}
-
-
-			Text {
-				id: itemText
-				text: styleData.value
-				color: itemItem.rowIsUsed ? systemPalette.text : systemPalette.mid
-				elide: styleData.elideMode
-				leftPadding: 4
-				horizontalAlignment: styleData.textAlignment
+				id: datafiltertatusText
+				text: filterModel.statusBarText
+				anchors.left: parent.left
 				anchors.verticalCenter: parent.verticalCenter
-
+				anchors.leftMargin: 8
 			}
+		}
 
-        }
-
-		rowDelegate: Item { height: 30 }
-
-        rowNumberDelegate: Rectangle
-        {
-            id: rowNumberBorder
-            anchors.left: parent.left
-            anchors.top: parent.top
-            //anchors.bottom: parent.bottom
-            color: systemPalette.mid
-
-            Rectangle
-            {
-                width: rowNumberBorder.width - 1
-                height: rowNumberBorder.height - 1
-
-                LinearGradient
-                {
-                    cached: true
-                    anchors.fill: parent
-                    start: Qt.point(0, rowNumberBorder.height * 0.5)
-                    end: Qt.point(rowNumberBorder.width, rowNumberBorder.height * 0.5)
-                    gradient: headersGradient
-                }
-
-                Text
-                {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: styleData.row + 1
-                    color: systemPalette.text
-                }
-            }
-        }
-    }
-
-    Rectangle
-    {
-        id: dataStatusBar
-        objectName: "dataStatusBar"
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        color: systemPalette.window
-
-        height: datafiltertatusText.text.length > 0 ? datafiltertatusText.contentHeight : 0
-
-        function setText(newText) { datafiltertatusText.text = newText }
-
-        Text
-        {
-            id: datafiltertatusText
-            text: ""
-            anchors.fill: parent
-
-
-
-        }
-    }
+	}
 }

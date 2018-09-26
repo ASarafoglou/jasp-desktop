@@ -34,17 +34,28 @@ SEXP jaspRCPP_requestTempFileNameSEXP(SEXP extension);
 SEXP jaspRCPP_requestTempRootNameSEXP();
 SEXP jaspRCPP_requestStateFileNameSEXP();
 
+const char * jaspRCPP_requestJaspResultsRelativeFilePath();
+
 void jaspRCPP_returnDataFrame(Rcpp::DataFrame frame);
 void jaspRCPP_returnString(SEXP Message);
-void jaspRCPP_setFilterWarning(SEXP Message);
-void jaspRCPP_setFilterError(SEXP Message);
+void jaspRCPP_setRWarning(SEXP Message);
+void jaspRCPP_setRError(SEXP Message);
+
+void jaspRCPP_setColumnDataAsScale(std::string columnName,			Rcpp::Vector<REALSXP> scalarData);
+void jaspRCPP_setColumnDataAsOrdinal(std::string columnName,		Rcpp::Vector<INTSXP> ordinalData);
+void jaspRCPP_setColumnDataAsNominal(std::string columnName,		Rcpp::Vector<INTSXP> nominalData);
+void jaspRCPP_setColumnDataAsNominalText(std::string columnName,	Rcpp::Vector<STRSXP> nominalData);
+
+//Calls from JASPresult (from R)
+typedef void (*sendFuncDef)(const char *);
+extern "C" void jaspRCPP_send(const char * msg);
 
 // This is a copy of column.h!!!!
 enum ColumnType { ColumnTypeUnknown = 0, ColumnTypeNominal = 1, ColumnTypeNominalText = 2, ColumnTypeOrdinal = 4, ColumnTypeScale = 8 };
 
 RBridgeColumnType* jaspRCPP_marshallSEXPs(SEXP columns, SEXP columnsAsNumeric, SEXP columnsAsOrdinal, SEXP columnsAsNominal, SEXP allColumns, int* colMax);
 
-void jaspRCPP_makeFactor(Rcpp::IntegerVector &v, char** levels, int nbLevels, bool ordinal = false);
+Rcpp::IntegerVector jaspRCPP_makeFactor(Rcpp::IntegerVector v, char** levels, int nbLevels, bool ordinal = false);
 void freeRBridgeColumnType(RBridgeColumnType* columnsRequested, int colMax);
 
 

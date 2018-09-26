@@ -536,6 +536,14 @@ AnovaRepeatedMeasures <- function(dataset=NULL, options, perform="run", callback
 
 	options(contrasts=c("contr.sum","contr.poly"))
 
+  # set these options once for all afex::aov_car calls,
+  # this ensures for instance that afex::aov_car always returns objects of class afex_aov.
+  afex::afex_options(
+    check_contrasts = TRUE, correction_aov = "GG", 
+    emmeans_model = "univariate", es_aov = "ges", factorize = TRUE, 
+    lmer_function = "lmerTest", method_mixed = "KR", return_aov = "afex_aov", 
+    set_data_arg = FALSE, sig_symbols = c(" +", " *", " **", " ***"), type = 3
+  )
 	if (options$sumOfSquares == "type1") {
 
 		result <- try(stats::aov(model.formula, data=dataset), silent = TRUE)
@@ -655,11 +663,27 @@ AnovaRepeatedMeasures <- function(dataset=NULL, options, perform="run", callback
 
 .referenceGrid <- function (options, fullModel) {
 		referenceGridList <- list()
-		variables <- unlist(c(options$betweenSubjectFactors, lapply(options$repeatedMeasuresFactors, function(x) x$name)))
+		variables <- unlist(c(lapply(options$betweenModelTerms, 
+		  function(x) {
+		    if (length(x$components) == 1) {
+		      return (x$components)
+		    } else {
+		      return(NULL)
+		    }
+		  }), lapply(options$withinModelTerms,
+		  function(x) {
+		    if (length(x$components) == 1) {
+		      return (x$components)
+		    } else {
+		      return(NULL)
+		    }
+		  })
+		))
+
 		for (var in variables) {
 
 			formula <- as.formula(paste("~", .v(var)))
-			referenceGrid <- emmeans::lsmeans(fullModel, formula)
+			referenceGrid <- emmeans::emmeans(fullModel, formula)
 
 			referenceGridList[[var]] <- referenceGrid
 
@@ -671,7 +695,23 @@ AnovaRepeatedMeasures <- function(dataset=NULL, options, perform="run", callback
 .resultsPostHoc <- function (referenceGrid, options, dataset, fullModel) {
     resultsPostHoc <- list()
   
-		variables <- unlist(c(options$betweenSubjectFactors, lapply(options$repeatedMeasuresFactors, function(x) x$name)))
+    variables <- unlist(c(lapply(options$betweenModelTerms, 
+                                 function(x) {
+                                   if (length(x$components) == 1) {
+                                     return (x$components)
+                                   } else {
+                                     return(NULL)
+                                   }
+                                 }), lapply(options$withinModelTerms,
+                                            function(x) {
+                                              if (length(x$components) == 1) {
+                                                return (x$components)
+                                              } else {
+                                                return(NULL)
+                                              }
+                                            })
+    ))
+    
 
 		postHocData <- fullModel$data$wide
 		factorNamesV <- colnames(postHocData) # Names to use to refer to variables in data
@@ -765,6 +805,10 @@ AnovaRepeatedMeasures <- function(dataset=NULL, options, perform="run", callback
 		contrastTypes <- c("none", "deviation", "simple", "Helmert", "repeated", "difference", "polynomial")
 
 		for (contrast in options$contrasts) {
+		  
+		  if (! contrast$variable %in% names(referenceGrid)) {
+		    next
+		  }
 
 			resultsContrasts[[contrast$variable]] <- list()
 
@@ -772,22 +816,81 @@ AnovaRepeatedMeasures <- function(dataset=NULL, options, perform="run", callback
 
 			for(contrastType in contrastTypes) {
 
-				contrastMatrix <- .anovaCreateContrast(column, contrastType)
-				c <- lapply(as.data.frame(contrastMatrix), as.vector)
-				names(c) <- .v(.anovaContrastCases(column, contrastType))
-
+			  contrastMatrix <- .rmAnovaCreateContrast(column, contrastType)
+				contrCoef <- lapply(as.data.frame(contrastMatrix), as.vector)
+				names(contrCoef) <- .v(.anovaContrastCases(column, contrastType))
+        
 				if (contrastType == "none") {
 					r <- NULL
 				} else {
-					r <- emmeans::contrast(referenceGrid[[contrast$variable]], c)
+					r <- emmeans::contrast(referenceGrid[[contrast$variable]], contrCoef)
 				}
-
 				resultsContrasts[[contrast$variable]][[contrastType]] <- summary(r)
 			}
 		}
 
 		return(resultsContrasts)
 }
+
+.rmAnovaCreateContrast <- function (column, contrast.type) {
+  
+  levels <- levels(column)
+  n.levels <- length(levels)
+  
+  contr <- NULL
+
+  if (contrast.type == "none") {
+    
+    options(contrasts = c("contr.sum","contr.poly"))
+    contr <- NULL
+    
+  } else if (contrast.type == "deviation") {
+    
+    contr <- matrix(0,nrow = n.levels, ncol = n.levels - 1)
+    for (i in 2:n.levels) {
+      contr[,(i-1)] <-  -1 / n.levels
+      contr[i,(i-1)] <- (n.levels - 1) / n.levels
+    }
+    
+  } else if (contrast.type == "simple") {
+    
+    contr <- matrix(0,nrow = n.levels, ncol = n.levels - 1)
+    for (i in 1:n.levels-1) {
+      contr[c(1,i+1),i]<- c(1,-1) * -1
+    }
+    
+  } else if (contrast.type == "Helmert") {
+    
+    contr <- contr.helmert(levels) 
+    contr <- apply(contr, 2, function(x){ x/max(abs(x))})
+    contr <- matrix(rev(contr), ncol = ncol(contr), nrow = nrow(contr))
+    
+  } else if (contrast.type == "repeated") {
+    
+    contr <- matrix(0,nrow = n.levels, ncol = n.levels - 1)
+    
+    for (i in 1:(n.levels-1)) {
+      contr[i,i] <- 1
+      contr[i+1,i] <- -1
+    }
+    
+  } else if (contrast.type == "difference") {
+
+    contr <- contr.helmert(levels) 
+    contr <- apply(contr, 2, function(x){ x/max(abs(x))})
+    
+  } else if (contrast.type == "polynomial") {
+    
+    contr <- contr.poly(levels)
+  }
+
+  if (! is.null(contr)) {
+    dimnames(contr) <- list(NULL, 1:dim(contr)[2])
+  }
+  
+  contr
+}
+
 
 .identicalTerms <- function(x,y) {
 
@@ -1964,6 +2067,10 @@ AnovaRepeatedMeasures <- function(dataset=NULL, options, perform="run", callback
 	contrastTables <- list()
 
 	for (contrast in options$contrasts) {
+	  
+	  if (! contrast$variable %in% names(stateContrasts)) {
+	    next
+	  }
 
 		if (contrast$contrast != "none") {
 
@@ -1998,7 +2105,12 @@ AnovaRepeatedMeasures <- function(dataset=NULL, options, perform="run", callback
 					row[["Comparison"]] <- .unv(result$contrast[i])
 					row[["Estimate"]] <- .clean(as.numeric(result$estimate[i]))
 					row[["SE"]] <- .clean(as.numeric(result$SE[i]))
-					row[["t"]] <- .clean(as.numeric(result$t.ratio[i]))
+					if ("z.ratio" %in% names(result)) {
+					  contrastTable$schema$fields[[4]]$name <- "z"
+					  row[["z"]] <- .clean(as.numeric(result$z.ratio[i]))
+					} else {
+					  row[["t"]] <- .clean(as.numeric(result$t.ratio[i]))
+					}
 					row[["p"]] <- .clean(as.numeric(result$p.value[i]))
 
 					if(length(rows) == 0)  {
@@ -2123,10 +2235,23 @@ AnovaRepeatedMeasures <- function(dataset=NULL, options, perform="run", callback
 						SE  <- .clean(as.numeric(statePostHoc[[posthoc.var]]$resultBonf$SE[index]))
 
 						if (reverse) {
-							t <- .clean(-as.numeric(statePostHoc[[posthoc.var]]$resultBonf$t.ratio[index]))
+						  
+						  if ("z.ratio" %in% names(statePostHoc[[posthoc.var]]$resultBonf)) {
+						    posthoc.table$schema$fields[[5]]$name <- "z"
+						    z <- .clean(-as.numeric(statePostHoc[[posthoc.var]]$resultBonf$z.ratio[index]))
+						  } else {
+						    t <- .clean(-as.numeric(statePostHoc[[posthoc.var]]$resultBonf$t.ratio[index]))
+						  }
 
 						} else {
-							t <- .clean(as.numeric(statePostHoc[[posthoc.var]]$resultBonf$t.ratio[index]))
+						  
+						  if ("z.ratio" %in% names(statePostHoc[[posthoc.var]]$resultBonf)) {
+						    posthoc.table$schema$fields[[5]]$name <- "z"
+						    z <- .clean(as.numeric(statePostHoc[[posthoc.var]]$resultBonf$z.ratio[index]))
+						  } else {
+						    t <- .clean(as.numeric(statePostHoc[[posthoc.var]]$resultBonf$t.ratio[index]))
+						  }
+						  
 						}
 
 						if (options$postHocTestEffectSize) 
@@ -2158,7 +2283,11 @@ AnovaRepeatedMeasures <- function(dataset=NULL, options, perform="run", callback
 
 					row[["Mean Difference"]] <- md
 					row[["SE"]]  <- SE
-					row[["t"]] <- t
+					if (posthoc.table$schema$fields[[5]]$name == "z") {
+					  row[["z"]] <- z
+					} else {
+					  row[["t"]] <- t
+					}
 					row[["Cohen's d"]] <- effectSize
 					row[["tukey"]] <- pTukey
 					row[["scheffe"]] <- pScheffe
@@ -2737,8 +2866,10 @@ AnovaRepeatedMeasures <- function(dataset=NULL, options, perform="run", callback
           subCovDataset <- covDataset[dataset[terms.base64[1]] == level,] 
         }
         subFactorNamesV <- factorNamesV
-        whichFactorsBesidesModerator <- !unlist(lapply((options[['betweenModelTerms']]), FUN = function(x){grepl(moderatorFactorOne, x)}))
-        subOptions[['betweenModelTerms']] <- options[['betweenModelTerms']][whichFactorsBesidesModerator]
+        whichTermsBesidesModerator <- !unlist(lapply((options[['betweenModelTerms']]), FUN = function(x){grepl(moderatorFactorOne, x)}))
+        whichFactorsBesidesModerator <- !unlist(lapply((options[['betweenSubjectFactors']]), FUN = function(x){grepl(moderatorFactorOne, x)}))
+        
+        subOptions[['betweenModelTerms']] <- options[['betweenModelTerms']][whichTermsBesidesModerator]
         subOptions[['betweenSubjectFactors']] <- options[['betweenSubjectFactors']][whichFactorsBesidesModerator]
       }
       areSimpleFactorCellsDropped <- ifelse(isSimpleFactorWithin, FALSE, (nrow(unique(subDataset[simpleFactor.base64])) <  
@@ -2760,7 +2891,7 @@ AnovaRepeatedMeasures <- function(dataset=NULL, options, perform="run", callback
             if (subOptions$sumOfSquares != "type1") {
               modOneIndex <- which(row.names(modelSummary) == .v(simpleFactor))
               df <- modelSummary[modOneIndex,'num Df']
-              SS <- modelSummary[modOneIndex,'SS']   
+              SS <- modelSummary[modOneIndex,'Sum Sq']  
               if (!options$poolErrorTermSimpleEffects) {
                 fullAnovaMS <- modelSummary[modOneIndex,'Error SS'] / modelSummary[modOneIndex,'den Df']
                 fullAnovaDf <- modelSummary[modOneIndex,'den Df']
@@ -2851,9 +2982,9 @@ AnovaRepeatedMeasures <- function(dataset=NULL, options, perform="run", callback
                 if (subSubOptions$sumOfSquares != "type1") {
                   modTwoIndex <- which(row.names(modelSummary) == .v(simpleFactor))
                   df <- modelSummary[modTwoIndex,'num Df']
-                  SS <- modelSummary[modTwoIndex,'SS']   
+                  SS <- modelSummary[modTwoIndex,'Sum Sq']   
                   if (!options$poolErrorTermSimpleEffects) {
-                    fullAnovaMS <- modelSummary[modTwoIndex,'Error SS'] / modelSummary[modOneIndex,'den Df']
+                    fullAnovaMS <- modelSummary[modTwoIndex,'Error SS'] / modelSummary[modTwoIndex,'den Df']
                     fullAnovaDf <- modelSummary[modTwoIndex,'den Df']
                   }
                 } else {
@@ -2898,6 +3029,20 @@ AnovaRepeatedMeasures <- function(dataset=NULL, options, perform="run", callback
     }
    
     simpleEffectsTable[["data"]] <- simpleEffectRows
+    
+    if (options$sumOfSquares == "type1") {
+      
+      .addFootnote(footnotes, text = "Type I Sum of Squares", symbol = "<em>Note.</em>")
+      
+    } else if (options$sumOfSquares == "type2") {
+      
+      .addFootnote(footnotes, text = "Type II Sum of Squares", symbol = "<em>Note.</em>")
+      
+    } else if (options$sumOfSquares == "type3") {
+      
+      .addFootnote(footnotes, text = "Type III Sum of Squares", symbol = "<em>Note.</em>")
+      
+    }
     
   } else {
     if(options$sumOfSquares == "type1" ) {

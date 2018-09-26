@@ -40,6 +40,9 @@ public:
 	explicit ResultsJsInterface(QWidget *parent = 0);
 
 	void setZoom(double zoom);
+	void zoomIn();
+	void zoomOut();
+	void zoomReset();
 
 	void showAnalysis(int id);
 	void analysisChanged(Analysis *analysis);
@@ -78,6 +81,7 @@ public slots:
 
 	void exportSelected(const QString &filename);
 	void getImageInBase64(int id, const QString &path);
+	void openFileTab();
 	
 
 private:

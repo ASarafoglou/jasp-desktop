@@ -1,13 +1,15 @@
 import QtQuick 2.7
-import QtQuick.Controls 2.3 as New
+import QtQuick.Controls 2.2 as New
 import QtQuick.Controls 1.4
 import QtQuick.Layouts 1.3
 
 FocusScope {
-    height: 200
+	height: calculatedMinimumHeight
     visible: opened
 
-    Layout.minimumHeight: buttonColumnVariablesWindow.minimumHeight
+	property real calculatedMinimumHeight: buttonColumnVariablesWindow.minimumHeight + columnNameVariablesWindow.height + 6
+
+	Layout.minimumHeight: calculatedMinimumHeight
 
 
     property var headersGradient: Gradient{
@@ -69,6 +71,8 @@ FocusScope {
                     anchors.right: buttonColumnVariablesWindow.left
                     anchors.bottom: parent.bottom
 
+					anchors.rightMargin: 2
+
                     signal columnChanged(string columnName)
 
                     model: levelsTableModel
@@ -98,13 +102,21 @@ FocusScope {
                             columnChanged(dataSetModel.columnTitle(variablesWindow.chosenColumn))
                     }
 
-                    function resizeValueColumn()
-                    {
-                        var title = "Values!"
-                        var minimumWidth = calculateMinimumRequiredColumnWidthTitle(0, title, 0, 0)
-                        levelsTableViewValueColumn.width = minimumWidth + 10
+					function resizeValueColumn()
+					{
+						var title = "Values!"
+						var minimumWidth = calculateMinimumRequiredColumnWidthTitle(1, title, 0, 0)
+						levelsTableViewValueColumn.width = minimumWidth + 10
 
-                    }
+					}
+
+					function resizeLabelColumn()
+					{
+						/*var title = "Labels!"
+						var minimumWidth = calculateMinimumRequiredColumnWidthTitle(2, title, 0, 0)
+						levelsTableViewLabelColumn.width = minimumWidth + 10*/
+
+					}
 
                     function moveUp()
                     {
@@ -163,6 +175,7 @@ FocusScope {
                             selection.select(selectThis, selectThis)
                         }
 
+						sendCurrentColumnChanged()
                     }
 
                     function closeYourself() { variablesWindow.chooseColumn(-1) }
@@ -171,7 +184,7 @@ FocusScope {
                     {
                         id: levelsTableViewFilterColumn
                         title: "Filter"
-                        width: 36
+						width: 40
                         role: "filter"
                     }
 
@@ -181,6 +194,8 @@ FocusScope {
                         id: levelsTableViewValueColumn
                         title: "Value"
                         role: "value"
+						width: 100
+						//width: levelsTableView.width - levelsTableViewLabelColumn.width - 20 - levelsTableViewFilterColumn.width
                     }
 
                     TableViewColumn
@@ -188,7 +203,7 @@ FocusScope {
                         id: levelsTableViewLabelColumn
                         title: "Label"
                         role: "label"
-                        width: levelsTableView.width - levelsTableViewValueColumn.width - 20 - levelsTableViewFilterColumn.width
+						width: levelsTableView.width - levelsTableViewValueColumn.width - 20 - levelsTableViewFilterColumn.width
                     }
 
                     headerDelegate: Rectangle
@@ -198,8 +213,8 @@ FocusScope {
                         color: systemPalette.mid
                         border.width: 0
                         radius: 0
-                        height: headerTextVars.implicitHeight
-                        width: headerTextVars.width
+						height: headerTextVars.contentHeight + 8
+						//width: headerTextVars.width + 8
 
                         Rectangle
                         {
@@ -216,115 +231,104 @@ FocusScope {
                                 id: headerTextVars
                                 text: styleData.value
                                 color: systemPalette.text
+
+								anchors.verticalCenter: parent.verticalCenter
+								x: 4
                             }
                         }
                     }
 
 					rowDelegate: null
 
-                    itemDelegate: Loader
-                    {
-                        property string textItem: styleData.value
-                        property color colorItem: systemPalette.text
-                        property int rowItem: styleData.row
-                        property int colItem: styleData.column
-                        property var valueItem: styleData.value
-						property bool alternate: rowItem % 2 == 1
-						property bool selected: levelsTableView.selection.timesUpdated, levelsTableView.selection.contains(rowItem); //Comma is a hack to get this to update: http://blog.mardy.it/2016/11/qml-trick-force-re-evaluation-of.html
-						property color colorBackground: selected ? systemPalette.dark : (alternate ? systemPalette.midlight : systemPalette.light)
+					itemDelegate: Rectangle
+					{
+						color: levelsTableView.selection.timesUpdated, levelsTableView.selection.contains(styleData.row) ? systemPalette.dark : (styleData.row % 2 == 1 ? systemPalette.midlight : systemPalette.light)
 
+						height: 30
 
-                        sourceComponent: styleData.column == 0 ? filterCheckBoxVariablesWindowTemplate : (styleData.column == 2 ? textInputVariablesWindowTemplate : textDisplayVariablesWindowTemplate)
-
-                        //anchors.fill: parent
-                    }
-
-                    Component {
-                        id: textInputVariablesWindowTemplate
-						Rectangle
+						New.Button
 						{
-							anchors.fill: parent
-							color: colorBackground
+							id: filterCheckButton
+							checkable: true
+							visible: styleData.column === 0
 
-							TextInput {
-								color: colorItem
+							anchors.top: parent.top
+							anchors.bottom: parent.bottom
+							anchors.horizontalCenter: parent.horizontalCenter
 
-								text: textItem
-								clip: true
-								selectByMouse: true
-								autoScroll: true
+							width: height
 
-								anchors.fill: parent
-								function acceptChanges() { levelsTableModel.setData(levelsTableModel.index(rowItem, colItem), text) }
-								onEditingFinished: acceptChanges()
-
-								onActiveFocusChanged:
-									if(activeFocus)
-									{
-										levelsTableView.selection.clear()
-										levelsTableView.selection.select(rowItem, rowItem)
-									}
-									else if(focus)
-										focus = false
+							checked: styleData.value
 
 
+							onClicked:
+								if(checked !== styleData.value)
+									 if (!levelsTableModel.setAllowFilterOnLabel(styleData.row, checked))
+                                         checked = true;
 
-
-								MouseArea
-								{
-									anchors.fill: parent
-									acceptedButtons: Qt.NoButton
-									cursorShape: Qt.IBeamCursor
-								}
-							}
-						}
-                    }
-
-                    Component {
-                        id: textDisplayVariablesWindowTemplate
-						Rectangle
-						{
-							anchors.fill: parent
-							color: colorBackground
-							Text {
-								color: colorItem
-								text: textItem
-								elide: Text.ElideMiddle
-								anchors.fill: parent
-
-							}
-						}
-                    }
-
-                    Component {
-                        id: filterCheckBoxVariablesWindowTemplate
-						Rectangle
-						{
-							id: plusMinusRect
-							anchors.fill: parent
-							color: colorBackground
-
-							PlusMinusCheckButton
+							background: Image
 							{
-								anchors.top: plusMinusRect.top
-								anchors.bottom: plusMinusRect.bottom
-								anchors.horizontalCenter: plusMinusRect.horizontalCenter
+								source: filterCheckButton.checked ? "qrc:/icons/check-mark.png" : "../images/cross.png"
+								sourceSize.width: Math.max(40, width)
+								sourceSize.height: Math.max(40, height)
+								width: filterCheckButton.width
+								height: filterCheckButton.height
 
-								width: height
-								color: colorItem
-								checked: valueItem
+							}
 
-								id: filterCheckButton
-								onClicked:
+						}
+
+						Text {
+							visible: styleData.column === 1
+
+							color: systemPalette.text
+							text: styleData.value
+							elide: Text.ElideMiddle
+							anchors.fill: parent
+						}
+
+						TextInput {
+							visible: styleData.column === 2
+
+							color: systemPalette.text
+
+							text: styleData.value
+							clip: true
+							selectByMouse: true
+							autoScroll: true
+
+							anchors.fill: parent
+							function acceptChanges()
+							{
+								if(styleData.row >= 0 && styleData.column >= 0)
+									levelsTableModel.setData(levelsTableModel.index(styleData.row, styleData.column), text)
+							}
+							onEditingFinished: focus = false
+
+							onActiveFocusChanged:
+								if(activeFocus)
 								{
-									if(checked != valueItem)
-										 levelsTableModel.setAllowFilterOnLabel(rowItem, checked);
-									checked = levelsTableModel.allowFilter(rowItem);
+									levelsTableView.selection.clear()
+									levelsTableView.selection.select(styleData.row, styleData.row)
 								}
+								else
+								{
+									if(focus)
+										focus = false
+									acceptChanges()
+								}
+
+
+
+
+							MouseArea
+							{
+								anchors.fill: parent
+								acceptedButtons: Qt.NoButton
+								cursorShape: Qt.IBeamCursor
 							}
 						}
-                    }
-
+					}
                 }
 
                 ColumnLayout
@@ -335,47 +339,69 @@ FocusScope {
                     anchors.right: parent.right
                     anchors.bottom: parent.bottom
 					spacing: 2
-					property real minimumHeight: (variablesWindowCloseButton.height + spacing) * 5 + ( 3 * spacing)
+					property int shownButtons: 4 + (eraseFiltersOnThisColumn.visible ? 1 : 0) + (eraseFiltersOnAllColumns.visible ? 1 : 0)
+					property real minimumHeight: (buttonHeight + spacing) * shownButtons + (3 * spacing)
+					property real buttonHeight: 26
 
-                    Button
+					FilterButton
                     {
                         //text: "UP"
-                        iconSource: "../images/arrow-up.png"
+						iconSource: "../images/arrow-up.png"
 
                         onClicked: levelsTableView.moveUp()
+						toolTip: "Move selected labels up"
+
+						height: buttonColumnVariablesWindow.buttonHeight
+						implicitHeight: buttonColumnVariablesWindow.buttonHeight
                     }
 
-                    Button
+					FilterButton
                     {
                         //text: "DOWN"
-                        iconSource: "../images/arrow-down.png"
+						iconSource: "../images/arrow-down.png"
 
                         onClicked: levelsTableView.moveDown()
+						toolTip: "Move selected labels down"
+
+						height: buttonColumnVariablesWindow.buttonHeight
+						implicitHeight: buttonColumnVariablesWindow.buttonHeight
                     }
 
-					Button
+					FilterButton
 					{
 						//text: "REVERSE"
 						iconSource: "../images/arrow-reverse.png"
 						onClicked: levelsTableView.reverse()
 
+						toolTip: "Reverse order of all labels"
+
+						height: buttonColumnVariablesWindow.buttonHeight
+						implicitHeight: buttonColumnVariablesWindow.buttonHeight
 					}
 
-					Button
+					FilterButton
 					{
-						//text: "ERASER"
+						id: eraseFiltersOnThisColumn
 						iconSource: "../images/eraser.png"
 						onClicked: levelsTableModel.resetFilterAllows()
 						visible: levelsTableModel.filteredOut > 0
 
+						toolTip: "Reset all filter checkmarks for this column"
+
+						height: buttonColumnVariablesWindow.buttonHeight
+						implicitHeight: buttonColumnVariablesWindow.buttonHeight
 					}
 
-					Button
+					FilterButton
 					{
-						//text: "ERASER ALL"
+						id: eraseFiltersOnAllColumns
 						iconSource: "../images/eraser_all.png"
 						onClicked: dataSetModel.resetAllFilters()
 						visible: dataSetModel.columnsFilteredCount > (levelsTableModel.filteredOut > 0 ? 1 : 0)
+						height: buttonColumnVariablesWindow.buttonHeight
+						implicitHeight: buttonColumnVariablesWindow.buttonHeight
+
+						toolTip: "Reset all filter checkmarks for all columns"
 					}
 
                     Item //Spacer
@@ -383,11 +409,15 @@ FocusScope {
                         Layout.fillHeight: true
                     }
 
-                    Button
+					FilterButton
                     {
                         id: variablesWindowCloseButton
-                        iconSource: "../images/cross.png"
+						iconSource: "../images/cross.png"
                         onClicked: variablesWindow.chooseColumn(-1)
+						height: buttonColumnVariablesWindow.buttonHeight
+						implicitHeight: buttonColumnVariablesWindow.buttonHeight
+
+						toolTip: "Close this view"
                     }
                 }
             }

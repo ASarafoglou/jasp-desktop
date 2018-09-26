@@ -205,9 +205,9 @@ test_that("(Repeated) Contrast table match", {
                             dataset = "AnovaMixedEffects.csv", options = options,
                             view = FALSE, quiet = TRUE)
   
-  refTable <- list("Attractive - Average", 13.5333333333333, 0.521959482105862, 25.9279384651327,
-                   6.94207506292919e-25, "TRUE", "Average - Ugly", 12.75, 0.521959482105862,
-                   24.4271834061903, 5.30699268885104e-24, "FALSE")
+  refTable <- list("Attractive - Average", 14.31667, 0.9040603, 15.83596,
+                   8.431449e-18, "TRUE", "Average - Ugly", 11.96667, 0.9040603,
+                   13.23658, 2.1268e-15, "FALSE")
   
   table <- results[["results"]][["contrasts"]][["collection"]][[1]][["data"]]
   expect_equal_tables(table, refTable)
@@ -244,5 +244,61 @@ test_that("Effect Size Calculation correct", {
   table <- results[["results"]][["withinSubjectsEffects"]][["data"]]
   expect_equal_tables(table, refTable)
 })
+
+test_that("Simple Effects table match", {
+  
+  options <- initOpts()
+  
+  options$betweenSubjectFactors <- "gender"
+  options$betweenModelTerms <- list(
+    list(components = "gender")
+  )
+  
+  options$simpleFactor <- "Looks"
+  options$moderatorFactorOne <- "gender"
+  options$moderatorFactorTwo <- "Charisma"
+  
+  results <- jasptools::run(name = "AnovaRepeatedMeasures",
+                            dataset = "AnovaMixedEffects.csv", #mydat,
+                            options = options,
+                            view = FALSE, quiet = TRUE)
+  
+  refTable <- list("Female", "High", 42.4666666666668, 2, 21.2333333333334, 0.639629588307488, 
+                   0.539062933641058, "TRUE", "Female", "Some", 6444.46666666667, 2, 
+                   3222.23333333334, 105.034770010866, 1.18808350406329e-10, "FALSE",               
+                   "Female", "None", 187.8, 2, 93.8999999999999, 10.1696750902527, 
+                   0.0011082808185639, "FALSE", "Male", "High", 5661.66666666667, 2, 
+                   2830.83333333333, 82.5850891410049, 8.54593593608342e-10, "TRUE", 
+                   "Male", "Some", 8157.26666666666, 2 ,4078.63333333333, 121.267591674926,
+                   3.58637028279497e-11, "FALSE", "Male", "None", 10955, 2, 5477.5,
+                   292.566765578635, 1.87815435905324e-14, "FALSE")
+  
+  table <- results[["results"]][["simpleEffects"]][["data"]]
+  expect_equal_tables(table, refTable)
+})
+
+test_that("Nonparametric table match", {
+  
+  options <- initOpts()
+  
+  options$betweenSubjectFactors <- "gender"
+  options$betweenModelTerms <- list(
+    list(components = "gender")
+  )
+  
+  options$friedmanWithinFactor <- "Charisma"
+  
+  results <- jasptools::run(name = "AnovaRepeatedMeasures",
+                            dataset = "AnovaMixedEffects.csv", #mydat,
+                            options = options,
+                            view = FALSE, quiet = TRUE)
+  
+  refTable <- list( "Charisma", 40.074508162411, 2, 1.98577994376659e-09, -170.212868480726,
+                    26.3987755757377, 8, 158, 1.2968573602055e-25)
+  
+  table <- results[["results"]][["friedman"]][["data"]]
+  expect_equal_tables(table, refTable)
+})
+
 
 

@@ -46,6 +46,10 @@ $(document).ready(function () {
 
 	var analyses = new JASPWidgets.Analyses({ className: "jasp-report" });
 
+    window.setZoom = function (zoom) {
+        var zoomProcent = "" + Math.floor(zoom * 100) + "%"
+        document.body.style.zoom = zoomProcent
+    }
 
 	window.reRenderAnalyses = function () {
 		analyses.reRender();
@@ -147,7 +151,7 @@ $(document).ready(function () {
 
 	window.latexCodeMenuClicked = function () {
 		if (window.menuObject.latexCodeMenuClicked | window.menuObject.latexCodeMenuClicked())
-			window.menuObject.toolbar.displayMessage("Latex code copied to clipboard");
+			window.menuObject.toolbar.displayMessage("LaTeX code copied to clipboard");
 
 		window.menuObject = null;
 	}
@@ -537,8 +541,8 @@ $(document).ready(function () {
 
 		jaspWidget.render();
 
-		if (selectedAnalysisId === analysis.id && (analysis.status == "inited" || analysis.status == "complete"))
-			window.scrollIntoView(jaspWidget.$el);
+		//if (selectedAnalysisId === analysis.id && (analysis.status == "inited" || analysis.status == "complete"))
+		//	window.scrollIntoView(jaspWidget.$el);
 	}
 	
 	$("#results").on("click", ".stack-trace-selector", function() {

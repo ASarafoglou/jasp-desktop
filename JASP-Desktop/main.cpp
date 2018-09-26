@@ -32,7 +32,8 @@ int main(int argc, char *argv[])
 	// Follow status of https://bugreports.qt.io/browse/QTBUG-61430 for 
 	// future permanent fix.
 	// This does slow down QML quite a bit and disables gradients
-	qputenv("QT_QUICK_BACKEND", "software");
+	// qputenv("QT_QUICK_BACKEND", "software");
+	QCoreApplication::setAttribute(Qt::AA_UseOpenGLES); //might fix weirdlooking QML on Windows when using not-so-goo drivers? ( https://github.com/jasp-stats/jasp-desktop/issues/2669 )
 #endif
 	QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 	QCoreApplication::setAttribute(Qt::AA_SynthesizeTouchForUnhandledMouseEvents, false); //To avoid weird splitterbehaviour with QML and a touchscreen

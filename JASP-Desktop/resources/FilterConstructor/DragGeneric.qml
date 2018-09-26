@@ -1,8 +1,10 @@
-import QtQuick 2.0
-import QtQuick.Controls 2.3
+import QtQuick 2.9
+import QtQuick.Controls 2.2
 
 
 MouseArea {
+	//Rectangle { color: "transparent"; border.color: "purple"; border.width: 1; anchors.fill: parent } //debug for size of the drags
+
 	id: mouseArea
 
 	z: 2
@@ -23,35 +25,13 @@ MouseArea {
 
 	property string __debugName: "DragGeneric " + shownChild !== undefined ? shownChild.__debugName : "?"
 
-	Rectangle
-	{
-		id: formulaNonBoolean
-		color: "transparent"
-		border.color: visibleBecauseOfMouseHover ? "#14a1e3" : "red"
-		border.width: visibleBecauseOfMouseHover ? 2 : 1
-		radius: visibleBecauseOfMouseHover ? 10 : 0
-		anchors.margins: visibleBecauseOfMouseHover ? -3 : 0
-
-		anchors.fill: parent
-
-		property bool visibleBecauseofCheckedError: mouseArea.wasChecked && mouseArea.isFormula && !mouseArea.isABoolean
-		property alias visibleBecauseOfMouseHover: mouseArea.shouldShowHoverOutline
-
-
-		visible: visibleBecauseofCheckedError || visibleBecauseOfMouseHover
-
-		z: -2
-	}
-
 	property string toolTipText: ""
-	property string shownToolTipText: formulaNonBoolean.visible ? "This formula should return logicals, try using '=', '>' or something similar." : toolTipText
+	property string shownToolTipText: toolTipText
 
 	ToolTip.delay: 1000
 	ToolTip.timeout: 5000
 	ToolTip.visible: shownToolTipText != "" && containsMouse
 	ToolTip.text: shownToolTipText
-
-
 
 	objectName: "DragGeneric"
 	property var shownChild: null
@@ -71,6 +51,7 @@ MouseArea {
 
 	hoverEnabled: true
 	cursorShape: (containsMouse && shownChild.shouldDrag(mouseX, mouseY)) || drag.active  ? Qt.PointingHandCursor : Qt.ArrowCursor
+	acceptedButtons: Qt.LeftButton | Qt.RightButton
 
 	property bool shouldShowHoverOutline: false
 
@@ -81,11 +62,21 @@ MouseArea {
 
 	}
 
-	onExited: shouldShowHoverOutline = false
-	onEntered: removeAncestorsHoverOutlines()
+	onExited:
+	{
+		//console.log(__debugName," onExited")
+		shouldShowHoverOutline = false
+	}
+
+	onEntered:
+	{
+		//console.log(__debugName," onEntered")
+		this.removeAncestorsHoverOutlines()
+	}
 
 	function removeAncestorsHoverOutlines()
 	{
+		//console.log(__debugName," removeAncestorsHoverOutlines")
 		var ancestor = parent
 		while(ancestor !== scriptColumn && ancestor !== null && ancestor !== undefined)
 		{
@@ -98,23 +89,37 @@ MouseArea {
 
 	onPressed:
 	{
-		shouldShowHoverOutline = false
-		oldParent = parent
+		//console.log(__debugName," onPressed")
 
-		if(!shownChild.shouldDrag(mouse.x, mouse.y))
-			mouse.accepted = false
+		if(mouse.buttons === Qt.RightButton)
+		{
+			//delete me!
+			if(alternativeDropFunction === null)
+				this.destroy();
+		}
 		else
 		{
-			dragHotSpotX = mouse.x
-			dragHotSpotY = mouse.y
+
+			shouldShowHoverOutline = false
+			oldParent = parent
+
+			if(!shownChild.shouldDrag(mouse.x, mouse.y))
+				mouse.accepted = false
+			else
+			{
+				mouseArea.dragHotSpotX = mouse.x
+				mouseArea.dragHotSpotY = mouse.y
+			}
 		}
 	}
 
 	onReleased:
 	{
+		//console.log(__debugName," onReleased")
+
 		if(alternativeDropFunction !== null)
 		{
-			var obj = alternativeDropFunction(this)
+			var obj = this.alternativeDropFunction(this)
 			if(obj !== null)
 				obj.releaseHere(dragMe.Drag.target)
 		}
@@ -124,7 +129,11 @@ MouseArea {
 
 	function releaseHere(dropTarget)
 	{
+		//console.log(__debugName," releaseHere(",dropTarget,")")
+
+		filterConstructor.somethingChanged = true
 		wasChecked = false
+
 		if(oldParent === null && dropTarget === null) //just created and not dropped anywhere specific!
 		{
 
@@ -148,7 +157,7 @@ MouseArea {
 
 			if(!foundAtLeastOneMatchingKey)
 			{
-				releaseHere(scriptColumn)
+				this.releaseHere(scriptColumn)
 				return
 			}
 		}
@@ -163,14 +172,18 @@ MouseArea {
 
 		if(dropTarget !== null && dropTarget.objectName === "DropTrash")
 		{
-			destroy();
+			this.destroy();
 			dropTarget.somethingHovers = false
 			return;
 		}
 
 		parent = dropTarget !== null ? dropTarget : scriptColumn
 
-		if(parent === oldParent ) { parent = null; parent = oldParent }
+		if(parent === oldParent )
+		{
+			parent = null
+			parent = oldParent
+		}
 
 
 
@@ -186,7 +199,7 @@ MouseArea {
 			parent.containsItem = this
 
 			shouldShowHoverOutline = false
-			removeAncestorsHoverOutlines()
+			this.removeAncestorsHoverOutlines()
 		}
 
 
@@ -195,6 +208,8 @@ MouseArea {
 
 	function determineReasonableInsertionSpot()
 	{
+		//console.log(__debugName," determineReasonableInsertionSpot")
+
 		if(scriptColumn.data.length === 0) return null
 
 		var lastScriptScrap = scriptColumn.data[scriptColumn.data.length - 1]
@@ -212,6 +227,8 @@ MouseArea {
 		return lastScriptScrap.returnEmptyRightMostDropSpot(true)
 	}
 
+	//onParentChanged: { console.log(__debugName," onParentChanged parent == ", parent === null ? "null" : parent === undefined ? "undefined" : parent.__debugName, " alternativeDropFunction == ", alternativeDropFunction === null ? "null" : alternativeDropFunction === undefined ? "undefined" : alternativeDropFunction)	}
+
 	function returnR()							{ return shownChild.returnR() }
 	function returnEmptyRightMostDropSpot()		{ return shownChild.returnEmptyRightMostDropSpot() }
 	function returnFilledRightMostDropSpot()	{ return shownChild.returnFilledRightMostDropSpot() }
@@ -220,6 +237,8 @@ MouseArea {
 
 	function tryLeftApplication()
 	{
+		//console.log(__debugName," tryLeftApplication")
+
 		this.releaseHere(scriptColumn)
 
         if(leftDropSpot === null || leftDropSpot.containsItem !== null || scriptColumn.data.length === 1) return false
@@ -256,8 +275,8 @@ MouseArea {
 					if(putResultHere === null) return
 					gobbleMeUp		= putResultHere.containsItem
 
-					if(gobbleMeUp.objectName !== "DragGeneric")
-						console.log("gobbleMeUp: ", gobbleMeUp, " is not a dragGeneric but a ",	gobbleMeUp.objectName)
+					//if(gobbleMeUp.objectName !== "DragGeneric")
+					//	console.log("gobbleMeUp: ", gobbleMeUp, " is not a dragGeneric but a ",	gobbleMeUp.objectName)
 
 				}
 
@@ -273,10 +292,12 @@ MouseArea {
 		x: mouseArea.x
 		y: mouseArea.y
 
-		Drag.keys: dragKeys
+		Drag.keys: ["all"]
 		Drag.active: mouseArea.drag.active
-		Drag.hotSpot.x: dragHotSpotX
-		Drag.hotSpot.y: dragHotSpotY
+		Drag.hotSpot.x: mouseArea.dragHotSpotX
+		Drag.hotSpot.y: mouseArea.dragHotSpotY
+
+		property alias dragKeys: mouseArea.dragKeys
 
 		Rectangle
 		{
@@ -285,11 +306,11 @@ MouseArea {
 			radius: width
 			property real maxWidth: 12
 			height: width
-			border.color: "red"
+			border.color: "#14a1e3"
 			border.width: 2
 
-			x: dragHotSpotX - (width / 2)
-			y: dragHotSpotY - (height / 2)
+			x: mouseArea.dragHotSpotX - (width / 2)
+			y: mouseArea.dragHotSpotY - (height / 2)
 			z: 10
 
 			visible: mouseArea.drag.active
@@ -297,6 +318,7 @@ MouseArea {
 				NumberAnimation { from: 1; to: dragHandleVisualizer.maxWidth; duration: 500;  }
 				NumberAnimation { from: dragHandleVisualizer.maxWidth; to: 1; duration: 500;  }
 				loops: Animation.Infinite
+				paused: !dragHandleVisualizer.visible
 			}
 
 		}

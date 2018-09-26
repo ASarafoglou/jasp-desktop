@@ -41,34 +41,12 @@ JASPWidgets.tableView = JASPWidgets.objectView.extend({
 		return true;
 	},
 
-	hasCitation: function () {
-		var optCitation = this.model.get("citation");
-		return optCitation !== null
+	hasLaTeXCode: function () {
+	  var optLaTeXCode = this.model.get("latexCode");
+	  return optLaTeXCode !== null
 	},
 
-	citeMenuClicked: function () {
-		var exportParams = new JASPWidgets.Exporter.params();
-		exportParams.format = JASPWidgets.ExportProperties.format.html;
-		exportParams.process = JASPWidgets.ExportProperties.process.copy;
-		exportParams.htmlImageFormat = JASPWidgets.ExportProperties.htmlImageFormat.temporary;
-		exportParams.includeNotes = false;
-
-		var optCitation = this.model.get("citation");
-
-		var htmlCite = '<p>' + optCitation.join("</p><p>") + '</p>';
-
-		var exportContent = new JASPWidgets.Exporter.data(optCitation.join("\n\n"), htmlCite);
-
-		pushTextToClipboard(exportContent, exportParams);
-		return true;
-	},
-
-	hasLatexCode: function () {
-		var optLatexCode = this.model.get("latexCode");
-		return optLatexCode !== null
-	},
-
-	_generateLatexCode: function() {
+	_generateLaTeXCode: function() {
 		/**
 		 * Generates the latex code for tables
 		 */
@@ -177,7 +155,7 @@ JASPWidgets.tableView = JASPWidgets.objectView.extend({
 			rowCount *= maxColumnsInColumn;
 		}
 
-		if (optCasesAcrossColumns) {
+		if (cells !== undefined && cells.length > 0 && optCasesAcrossColumns) {
 			let swapped = swapRowsAndColumns(columnHeaders, cells, optOverTitle);
 			cells = swapped.columns;
 			columnHeaders = swapped.columnHeaders;
@@ -188,7 +166,7 @@ JASPWidgets.tableView = JASPWidgets.objectView.extend({
 		return {'headers': columnHeaders, 'cells': cells}
 	},
 
-	_getLatexCode: function() {
+	_getLaTeXCode: function() {
 		/**
 		 * Generates the latex code for the table
 		 */
@@ -200,11 +178,9 @@ JASPWidgets.tableView = JASPWidgets.objectView.extend({
 		let optOverTitle = this.model.get('overTitle')
 		let optFootnotes = this.model.get('footnotes');
 
-		let data = this._generateLatexCode();
+		let data = this._generateLaTeXCode();
 
-		// TODO:
-		//       2. handle all cases for tables
-		//       3. footnotes formatting
+		// TODO: footnotes formatting
 
 		let variable = "";  // required to find out the first column
 		for (let i = 0; i < optSchema.fields.length; ++i) {
@@ -216,7 +192,7 @@ JASPWidgets.tableView = JASPWidgets.objectView.extend({
 
 		let latexCode = "";
 		// title
-		latexCode += "\\begin{table}[h]\n\t\\centering\n\t\\caption{" + optTitle + "}\n";
+		latexCode += "\\begin{table}[h]\n\t\\centering\n\t\\caption{" + formatCellforLaTeX(optTitle) + "}\n";
 
 		// alignments - {lrrr}
 		let columns = data.headers.length;
@@ -251,10 +227,10 @@ JASPWidgets.tableView = JASPWidgets.objectView.extend({
 					if (current !== undefined) {
 						if (prev === current) {
 							count++;
-							latexCode += ('\\multicolumn{' + count + '}{c}{'+ formatCellforLatex(prev) + '} ');
+							latexCode += ('\\multicolumn{' + count + '}{c}{'+ formatCellforLaTeX(prev) + '} ');
 							cline_text += '\\cline{' + (i - count + 2) + '-' + (i + 1) + '}';
-						} else {
-							latexCode += ('\\multicolumn{' + count + '}{c}{'+ formatCellforLatex(prev) + '} & ');
+						  } else {
+							latexCode += ('\\multicolumn{' + count + '}{c}{'+ formatCellforLaTeX(prev) + '} & ');
 							cline_text += '\\cline{' + (i - count + 2) + '-' + (i + 1) + '}';
 							latexCode += ('\\multicolumn{1}{c}{'+ current + '} ');
 						}
@@ -264,7 +240,7 @@ JASPWidgets.tableView = JASPWidgets.objectView.extend({
 
 				if (current === undefined) {
 					if (prev !== undefined) {
-						latexCode += ('\\multicolumn{' + count + '}{c}{'+ formatCellforLatex(prev) + '} & ');
+						latexCode += ('\\multicolumn{' + count + '}{c}{'+ formatCellforLaTeX(prev) + '} & ');
 						cline_text += '\\cline{' + (i - count + 1) + '-' + i + '}';
 					}
 
@@ -276,7 +252,7 @@ JASPWidgets.tableView = JASPWidgets.objectView.extend({
 					}
 				} else {
 					if (current !== prev && prev !== undefined) {
-						latexCode += ('\\multicolumn{' + count + '}{c}{'+ formatCellforLatex(prev) + '} & ');
+						latexCode += ('\\multicolumn{' + count + '}{c}{'+ formatCellforLaTeX(prev) + '} & ');
 						cline_text += '\\cline{' + (i - count + 1) + '-' + i + '}';
 						count = 1;
 					} else {
@@ -292,7 +268,7 @@ JASPWidgets.tableView = JASPWidgets.objectView.extend({
 		}
 
 		for (let i = 0; i < columns; ++i) {
-			latexCode += (formatCellforLatex(data.headers[i].content) + ' ');
+			latexCode += (formatCellforLaTeX(data.headers[i].content) + ' ');
 			if (i !== columns - 1) {
 				latexCode += '& ';
 			}
@@ -310,30 +286,37 @@ JASPWidgets.tableView = JASPWidgets.objectView.extend({
 
 		let firstColRow = 0;
 		let incrementFirstCol = true;
+		let previousContent = '-x-';
 		for (let r = 0; r < maxRows; ++r) {
 
-			latexCode += '\t\t';
-			if (incrementFirstCol) {
-				latexCode += (formatCellforLatex(data.cells[0][firstColRow].content));
+		  latexCode += '\t\t';
+		  if (maxRows === data.cells[0].length) {
+			content = formatCellforLaTeX(data.cells[0][r].content);
+			if (previousContent !== content) {
+			  latexCode += content;
+			  previousContent = content;
 			}
-			latexCode += (' & ');
+		  } else if (incrementFirstCol) {
+			latexCode += (formatCellforLaTeX(data.cells[0][firstColRow].content));
+		  }
+		  latexCode += (' & ');
 
-			let isStartOfGroup = data.cells[0][firstColRow]['isStartOfGroup'];
-			incrementFirstCol = !isStartOfGroup;
+		  let isStartOfGroup = data.cells[0][firstColRow]['isStartOfGroup'];
+		  // incrementFirstCol = !isStartOfGroup;
 
-			if (isStartOfGroup === undefined || isStartOfGroup === false) {
-				incrementFirstCol = true;
-			} else {
-				incrementFirstCol = false;
-			}
+		  if (isStartOfGroup === undefined || isStartOfGroup === false) {
+			incrementFirstCol = true;
+		  } else {
+			incrementFirstCol = false;
+		  }
 
-			for (let c = 1; c < columns; ++c) {
-				latexCode += (formatCellforLatex(data.cells[c][r].content) + ' ');
-				if (c != columns - 1) {
-					latexCode += ('& ');
-				} else {
-					latexCode += ' \\\\\n';
-				}
+		  for (let c = 1; c < columns; ++c) {
+			latexCode += (formatCellforLaTeX(data.cells[c][r].content) + ' ');
+			  if (c != columns - 1) {
+				  latexCode += ('& ');
+			  } else {
+				  latexCode += ' \\\\\n';
+			  }
 			}
 
 			if (!incrementFirstCol) {
@@ -355,11 +338,11 @@ JASPWidgets.tableView = JASPWidgets.objectView.extend({
 		}
 
 		latexCode += "\\end{table}"
-		latexCode += "\n%%%%%%%%%% Created by JASP %%%%%%%%%%\n";
+		latexCode += "\n%---------- Generated by JASP ----------%\n";
 
 		// Add a comment
 		if (overTitleExists) {
-			latexCode = "%%%%% Requires booktabs package %%%%%\n\\usepackage{booktabs}\n\n" + latexCode;
+		  latexCode = "%----- Requires booktabs package -----%\n\\usepackage{booktabs}\n\n" + latexCode;
 		}
 
 		return latexCode;
@@ -372,7 +355,7 @@ JASPWidgets.tableView = JASPWidgets.objectView.extend({
 		exportParams.htmlImageFormat = JASPWidgets.ExportProperties.htmlImageFormat.temporary;
 		exportParams.includeNotes = false;
 
-		let latexCode = this._getLatexCode();
+		let latexCode = this._getLaTeXCode();
 
 		let htmlCite = '<p>' + latexCode + '</p>';
 		let exportContent = new JASPWidgets.Exporter.data(latexCode, htmlCite);
@@ -411,9 +394,9 @@ JASPWidgets.tableView = JASPWidgets.objectView.extend({
 			return self.$el.find('th, td:not(.squash-left)');
 		};
 
-		var tablePrimative = new JASPWidgets.tablePrimative({ model: this.model, className: "jasp-table-primative jasp-display-primative" });
-		this.localViews.push(tablePrimative);
-		this.views.push(tablePrimative);
+		var tablePrimitive = new JASPWidgets.tablePrimitive({ model: this.model, className: "jasp-table-primitive jasp-display-primitive" });
+		this.localViews.push(tablePrimitive);
+		this.views.push(tablePrimitive);
 	},
 
 	titleFormatOverride: 'span',
@@ -421,7 +404,7 @@ JASPWidgets.tableView = JASPWidgets.objectView.extend({
 	disableTitleExport: true,
 });
 
-JASPWidgets.tablePrimative = JASPWidgets.View.extend({
+JASPWidgets.tablePrimitive = JASPWidgets.View.extend({
 
 	render: function () {
 		var optSchema = this.model.get("schema");
@@ -544,7 +527,11 @@ JASPWidgets.tablePrimative = JASPWidgets.View.extend({
 			rowCount *= maxColumnsInColumn
 		}
 
-		if (optCasesAcrossColumns) {
+		console.log("cells: ")
+		console.log(cells)
+
+
+		if (cells !== undefined && cells.length > 0 && optCasesAcrossColumns) {
 
 			var swapped = swapRowsAndColumns(columnHeaders, cells, optOverTitle)
 			cells = swapped.columns
@@ -717,7 +704,7 @@ JASPWidgets.tablePrimative = JASPWidgets.View.extend({
 					cellClass += (cell.isStartOfGroup ? " new-group-row" : "")
 					cellClass += (cell.isStartOfSubGroup ? " new-sub-group-row" : "")
 					cellClass += (cell.isEndOfGroup ? " last-group-row" : "")
-                    cellClass += (cell.span > 1 ? " row-span" : "")
+					cellClass += (cell.span > 1 ? " row-span" : "")
 
 					cellHtml += (cell.header ? '<th' : '<td')
 					cellHtml += ' class="value ' + cellClass + '"'
@@ -772,17 +759,15 @@ JASPWidgets.tablePrimative = JASPWidgets.View.extend({
 				var footnote = optFootnotes[i]
 
 				if (_.isString(footnote)) {
-
-					chunks.push(this._symbol(i) + '&nbsp;')
-					chunks.push(footnote)
+				  chunks.push(symbol(i) + '&nbsp;')
+				  chunks.push(footnote)
 				}
 
 				if (_.has(footnote, "symbol")) {
-
-					if (_.isNumber(footnote.symbol))
-						chunks.push(this._symbol(footnote.symbol) + '&nbsp;')
-					else
-						chunks.push(footnote.symbol + '&nbsp;')
+				  if (_.isNumber(footnote.symbol))
+					chunks.push(symbol(footnote.symbol) + '&nbsp;')
+				  else
+					chunks.push(footnote.symbol + '&nbsp;')
 
 					chunks.push(footnote.text)
 				}

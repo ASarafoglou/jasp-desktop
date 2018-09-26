@@ -4,8 +4,7 @@ include(../JASP.pri)
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-
-include(../JASP.pri)
+include(../R_HOME.pri)
 
 CONFIG += c++11
 
@@ -13,7 +12,8 @@ DESTDIR = ..
 
 windows:TARGET = JASP
    macx:TARGET = JASP
-  linux: exists(/app/lib/*)	{ TARGET = org.jasp.JASP } else { TARGET = jasp }
+  linux:{ exists(/app/lib/*) {TARGET = org.jasp.JASP } else { TARGET = jasp }}
+
 
 TEMPLATE = app
 
@@ -49,7 +49,7 @@ windows:LIBS += -lole32 -loleaut32
 
 linux {
 	exists(/app/lib/*)	{ LIBS += -larchive -lrt -L/app/lib -lboost_filesystem -lboost_system
-	} else				{ LIBS += -larchive -lrt -ljsoncpp -lboost_filesystem -lboost_system }
+        } else				{ LIBS += -larchive -lrt -lboost_filesystem -lboost_system }
 }
 
 macx:QMAKE_CXXFLAGS_WARN_ON += -Wno-unused-parameter -Wno-unused-local-typedef
@@ -118,5 +118,27 @@ exists(/app/lib/*) {
 	flatpak_appinfo_icon128.files = ../Tools/flatpak/128/org.jasp.JASP.png
 	flatpak_appinfo_icon128.path = /app/share/app-info/icons/flatpak/128x128
 	INSTALLS += flatpak_appinfo_icon128
+}
+
+#Lets create a nice shellscript that tells us which version of JASP and R we are building/using!
+unix {
+    SCRIPTFILENAME=$${OUT_PWD}/../versionScript.sh
+
+    createVersionScript.commands += echo \"$${LITERAL_HASH}!/bin/sh\"                                                                           >  $$SCRIPTFILENAME ;
+    createVersionScript.commands += echo \"JASP_VERSION_MAJOR=$$JASP_VERSION_MAJOR\"                                                            >> $$SCRIPTFILENAME ;
+    createVersionScript.commands += echo \"JASP_VERSION_MINOR=$$JASP_VERSION_MINOR\"                                                            >> $$SCRIPTFILENAME ;
+    createVersionScript.commands += echo \"JASP_VERSION_REVISION=$$JASP_VERSION_REVISION\"                                                      >> $$SCRIPTFILENAME ;
+    createVersionScript.commands += echo \"JASP_VERSION_BUILD=$$JASP_VERSION_BUILD\n\"                                                          >> $$SCRIPTFILENAME ;
+    createVersionScript.commands += echo \"JASP_VERSION=$${JASP_VERSION_MAJOR}.$${JASP_VERSION_MINOR}.$${JASP_VERSION_REVISION}.$${JASP_VERSION_BUILD}\n\"  >> $$SCRIPTFILENAME ;
+    createVersionScript.commands += echo \"CURRENT_R_VERSION=$$CURRENT_R_VERSION\"                                                              >> $$SCRIPTFILENAME ;
+
+    QMAKE_EXTRA_TARGETS += createVersionScript
+    POST_TARGETDEPS     += createVersionScript
+}
+
+#ENVIRONMENT_CRYPTKEY="$(SIMPLECRYPTKEY)"
+message("ENVIRONMENT_CRYPTKEY: $$[ENVIRONMENT_CRYPTKEY]")
+!isEmpty($$[ENVIRONMENT_CRYPTKEY]) {
+    DEFINES+="ENVIRONMENT_CRYPTKEY=$$[ENVIRONMENT_CRYPTKEY]"
 }
 

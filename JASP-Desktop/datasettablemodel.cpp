@@ -26,6 +26,7 @@
 #include <QQmlEngine>
 
 #include "qutils.h"
+#include "sharedmemory.h"
 
 using namespace std;
 
@@ -33,39 +34,38 @@ DataSetTableModel::DataSetTableModel(QObject *parent) :
     QAbstractTableModel(parent)
 {
 	_dataSet = NULL;
-
-	_nominalTextIcon	= QIcon(":/icons/variable-nominal-text.svg");
-	_nominalIcon		= QIcon(":/icons/variable-nominal.svg");
-	_ordinalIcon		= QIcon(":/icons/variable-ordinal.svg");
-	_scaleIcon			= QIcon(":/icons/variable-scale.svg");
 }
 
-QVariant DataSetTableModel::getColumnTypesWithCorrespondingIcon()
+QVariant DataSetTableModel::getColumnTypesWithCorrespondingIcon() const
 {
-	QVariantList ColumnTypeAndIcons;
+	static QVariantList ColumnTypeAndIcons;
 
 	//enum ColumnType { ColumnTypeUnknown = 0, ColumnTypeNominal = 1, ColumnTypeNominalText = 2, ColumnTypeOrdinal = 4, ColumnTypeScale = 8 };
 
-	ColumnTypeAndIcons.push_back(QVariant(QString("")));
-	ColumnTypeAndIcons.push_back(QVariant(QString("../icons/variable-nominal.svg")));
-	ColumnTypeAndIcons.push_back(QVariant(QString("../icons/variable-nominal-text.svg")));
-	ColumnTypeAndIcons.push_back(QVariant(QString("")));
-	ColumnTypeAndIcons.push_back(QVariant(QString("../icons/variable-ordinal.svg")));
-	for(int i=0; i<3;i++)
+	if(ColumnTypeAndIcons.size() == 0)
+	{
 		ColumnTypeAndIcons.push_back(QVariant(QString("")));
-
-	ColumnTypeAndIcons.push_back(QVariant(QString("../icons/variable-scale.svg")));
-
+		ColumnTypeAndIcons.push_back(QVariant(QString("../icons/variable-nominal.svg")));
+		ColumnTypeAndIcons.push_back(QVariant(QString("../icons/variable-nominal-text.svg")));
+		ColumnTypeAndIcons.push_back(QVariant(QString("")));
+		ColumnTypeAndIcons.push_back(QVariant(QString("../icons/variable-ordinal.svg")));
+		ColumnTypeAndIcons.push_back(QVariant(QString("")));
+		ColumnTypeAndIcons.push_back(QVariant(QString("")));
+		ColumnTypeAndIcons.push_back(QVariant(QString("")));
+		ColumnTypeAndIcons.push_back(QVariant(QString("../icons/variable-scale.svg")));
+	}
 
 	return QVariant(ColumnTypeAndIcons);
 }
 
-void DataSetTableModel::setDataSet(DataSet* dataSet)
+void DataSetTableModel::setDataSetPackage(DataSetPackage *package)
 {
     beginResetModel();
-	_dataSet = dataSet;
+	_dataSet = package == NULL ? NULL : package->dataSet();
+	_package = package;
     endResetModel();
-	notifyColumnFilterStatusChanged();
+
+	emit columnsFilteredCountChanged();
 }
 
 
@@ -90,17 +90,34 @@ QVariant DataSetTableModel::data(const QModelIndex &index, int role) const
 	if (_dataSet == NULL)
 		return QVariant();
 
-	int column = -1;
+	int column = index.column();
 
-	if (role == Qt::DisplayRole)
-		column = index.column();
-	else if(role >= Qt::UserRole)
-		column = role - Qt::UserRole;
 
-	if(column > -1)
+	if(column > -1 && column < columnCount())
 	{
-		QString value = tq(_dataSet->column(column)[index.row()]);
-		return QVariant(value);
+		if(role == Qt::DisplayRole)
+			return tq(_dataSet->column(column)[index.row()]);
+		else if(role == (int)specialRoles::active)
+			return getRowFilter(index.row());
+		else if(role == (int)specialRoles::lines)
+		{
+			bool	iAmActive = getRowFilter(index.row()),
+					//aboveMeIsActive = index.row() > 0				&& data(this->index(index.row() - 1, index.column()), (int)specialRoles::active).toBool();
+					belowMeIsActive = index.row() < rowCount() - 1	&& data(this->index(index.row() + 1, index.column()), (int)specialRoles::active).toBool();
+					//iAmLastRow = index.row() == rowCount() - 1;
+
+			bool	up		= iAmActive,
+					left	= iAmActive,
+					down	= iAmActive && !belowMeIsActive,
+					right	= iAmActive && index.column() == columnCount() - 1; //always draw left line and right line only if last col
+
+			return	(left ?		1 : 0) +
+					(right ?	2 : 0) +
+					(up ?		4 : 0) +
+					(down ?		8 : 0);
+		}
+
+
 	}
 
     return QVariant();
@@ -108,7 +125,7 @@ QVariant DataSetTableModel::data(const QModelIndex &index, int role) const
 
 QVariant DataSetTableModel::columnTitle(int column) const
 {
-	if(column >= 0 && column < _dataSet->columnCount())
+	if(column >= 0 && size_t(column) < _dataSet->columnCount())
 	{
 		QString value = tq(_dataSet->column(column).name());
 		return QVariant(value);
@@ -119,7 +136,7 @@ QVariant DataSetTableModel::columnTitle(int column) const
 
 QVariant DataSetTableModel::columnIcon(int column) const
 {
-	if(column >= 0 && column < _dataSet->columnCount())
+	if(column >= 0 && size_t(column) < _dataSet->columnCount())
 	{
 		Column &columnref = _dataSet->column(column);
 		return QVariant(columnref.columnType());
@@ -128,15 +145,21 @@ QVariant DataSetTableModel::columnIcon(int column) const
 		return QVariant(-1);
 }
 
-QVariant DataSetTableModel::columnHasFilter(int column) const
+bool DataSetTableModel::columnHasFilter(int column) const
 {
-	if(_dataSet != NULL && column >= 0 && column < _dataSet->columnCount())
+	if(_dataSet != NULL && column >= 0 && size_t(column) < _dataSet->columnCount())
+		return _dataSet->column(column).hasFilter();
+	return false;
+}
+
+bool DataSetTableModel::columnUsedInEasyFilter(int column) const
+{
+	if(_dataSet != NULL && size_t(column) < _dataSet->columnCount())
 	{
-		QString value = tq(_dataSet->column(column).name());
-		return QVariant(_dataSet->column(column).hasFilter());
+		std::string colName = _dataSet->column(column).name();
+		return columnNameUsedInEasyFilter.count(colName) > 0 && columnNameUsedInEasyFilter.at(colName);
 	}
-	else
-		return QVariant(false);
+	return false;
 }
 
 int DataSetTableModel::columnsFilteredCount()
@@ -145,8 +168,8 @@ int DataSetTableModel::columnsFilteredCount()
 
 	int colsFiltered = 0;
 
-	for(int column=0; column<_dataSet->columnCount(); column++)
-		if(_dataSet->column(column).hasFilter())
+	for(auto & col : _dataSet->columns())
+		if(col.hasFilter())
 			colsFiltered++;
 
 	return colsFiltered;
@@ -154,11 +177,40 @@ int DataSetTableModel::columnsFilteredCount()
 
 void DataSetTableModel::resetAllFilters()
 {
-	for(int col=0; col<_dataSet->columnCount(); col++)
-		_dataSet->column(col).resetFilter();
+	for(auto & col : _dataSet->columns())
+		col.resetFilter();
 
 	emit allFiltersReset();
-	notifyColumnFilterStatusChanged();
+	emit columnsFilteredCountChanged();
+	emit headerDataChanged(Qt::Horizontal, 0, columnCount());
+}
+
+int DataSetTableModel::getMaximumColumnWidthInCharacters(size_t columnIndex) const
+{
+	if(columnIndex >= _dataSet->columnCount()) return 0;
+
+	Column & col = _dataSet->column(columnIndex);
+
+	int extraPad = 2;
+
+	switch(col.columnType())
+	{
+	case Column::ColumnTypeScale:
+		return 6 + extraPad; //default precision of stringstream is 6 (and sstream is used in displaying scale values) + some padding because of dots and whatnot
+
+	case Column::ColumnTypeUnknown:
+		return 0;
+
+	default:
+	{
+		int tempVal = 0;
+
+		for(size_t labelIndex=0; labelIndex < col.labels().size(); labelIndex++)
+			tempVal = std::max(tempVal, (int)col.labels().getLabelFromRow(labelIndex).length());
+
+		return tempVal + extraPad;
+	}
+	}
 
 }
 
@@ -171,7 +223,7 @@ QVariant DataSetTableModel::headerData ( int section, Qt::Orientation orientatio
 	{
 		if (orientation == Qt::Horizontal)
 		{
-			QString value = tq(_dataSet->column(section).name()) + QString("        ");
+			QString value = tq(_dataSet->column(section).name());
 			return QVariant(value);
 		}
 		else
@@ -179,32 +231,23 @@ QVariant DataSetTableModel::headerData ( int section, Qt::Orientation orientatio
 			return QVariant(section + 1);
 		}
 	}
-	else if (role == Qt::DecorationRole && orientation == Qt::Horizontal)
+	else if(role == (int)specialRoles::maxColString) //A query from DataSetView for the maximumlength string to be expected! This to accomodate columnwidth
 	{
-		Column &column = _dataSet->column(section);
+		//calculate some maximum string?
+		QString dummyText = headerData(section, orientation, Qt::DisplayRole).toString() + "XXXXX" + (isComputedColumn(section) ? "XXXXX" : ""); //Bit of padding for filtersymbol and columnIcon
+		int colWidth = getMaximumColumnWidthInCharacters(section);
 
-		switch (column.columnType())
-		{
-		case Column::ColumnTypeNominalText:
-			return QVariant(_nominalTextIcon);
-		case Column::ColumnTypeNominal:
-			return QVariant(_nominalIcon);
-		case Column::ColumnTypeOrdinal:
-			return QVariant(_ordinalIcon);
-		case Column::ColumnTypeScale:
-			return QVariant(_scaleIcon);
-		default:
-			return QVariant();
-		}
+		while(colWidth > dummyText.length())
+			dummyText += "X";
+
+		return dummyText;
 	}
-	else if (role == Qt::SizeHintRole && orientation == Qt::Vertical)
-	{
-		return QVariant(/*QSize(80, -1)*/);
-	}
-	else if (role == Qt::TextAlignmentRole)
-	{
-		return QVariant(Qt::AlignCenter);
-	}
+	else if(role == Qt::TextAlignmentRole)							return QVariant(Qt::AlignCenter);
+	else if(role == (int)specialRoles::columnIsComputed)			return isComputedColumn(section);
+	else if(role == (int)specialRoles::computedColumnIsInvalidated)	return isComputedColumnInvalided(section);
+	else if(role == (int)specialRoles::columnIsFiltered)			return columnHasFilter(section) || columnUsedInEasyFilter(section);
+	else if(role == (int)specialRoles::computedColumnError)			return getComputedColumnError(section);
+
 
 	return QVariant();
 }
@@ -213,23 +256,18 @@ QHash<int, QByteArray> DataSetTableModel::roleNames() const
 {
 	QHash<int, QByteArray> roles = QAbstractTableModel::roleNames ();
 
-	for(int i=0; i<columnCount(); i++)
-		roles[Qt::UserRole + i] = (QString("column_")+QString::number(i)).toUtf8();
+
+	roles[(int)specialRoles::active]						= QString("active").toUtf8();
+	roles[(int)specialRoles::lines]							= QString("lines").toUtf8();
+	roles[(int)specialRoles::maxColString]					= QString("maxColString").toUtf8();
+	roles[(int)specialRoles::columnIsFiltered]				= QString("columnIsFiltered").toUtf8();
+	roles[(int)specialRoles::columnIsComputed]				= QString("columnIsComputed").toUtf8();
+	roles[(int)specialRoles::computedColumnError]			= QString("computedColumnError").toUtf8();
+	roles[(int)specialRoles::computedColumnIsInvalidated]	= QString("computedColumnIsInvalidated").toUtf8();
 
 	return roles;
 }
 
-QStringList DataSetTableModel::userRoleNames() const
-{
-	QMap<int, QString> res;
-	QHashIterator<int, QByteArray> i(roleNames());
-	while (i.hasNext()) {
-		i.next();
-		if(i.key() >= Qt::UserRole)
-			res[i.key()] = i.value();
-	}
-	return res.values();
-}
 
 bool DataSetTableModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
@@ -278,7 +316,42 @@ Column::ColumnType DataSetTableModel::getColumnType(int columnIndex)
 
 void DataSetTableModel::refreshColumn(Column * column)
 {
-	for(int col=0; col<_dataSet->columns().size(); col++)
+	for(size_t col=0; col<_dataSet->columns().columnCount(); col++)
 		if(&(_dataSet->columns()[col]) == column)
 			emit dataChanged(index(0, col), index(rowCount()-1, col));
 }
+
+void DataSetTableModel::columnWasOverwritten(std::string columnName, std::string possibleError)
+{
+	for(size_t col=0; col<_dataSet->columns().columnCount(); col++)
+		if(_dataSet->columns()[col].name() == columnName)
+			emit dataChanged(index(0, col), index(rowCount()-1, col));
+}
+
+int DataSetTableModel::setColumnTypeFromQML(int columnIndex, int newColumnType)
+{
+	setColumnType(columnIndex, (Column::ColumnType)newColumnType);
+
+	emit headerDataChanged(Qt::Orientation::Horizontal, columnIndex, columnIndex);
+	emit columnDataTypeChanged(_dataSet->column(columnIndex).name());
+
+	return getColumnType(columnIndex);
+}
+
+void DataSetTableModel::setColumnsUsedInEasyFilter(std::set<std::string> usedColumns)
+{
+	columnNameUsedInEasyFilter.clear();
+
+	for(auto & col : usedColumns)
+	{
+		columnNameUsedInEasyFilter[col] = true;
+		try { notifyColumnFilterStatusChanged(_dataSet->columns().findIndexByName(col)); } catch(...) {}
+	}
+}
+
+void DataSetTableModel::notifyColumnFilterStatusChanged(int columnIndex)
+{
+	emit columnsFilteredCountChanged();
+	emit headerDataChanged(Qt::Horizontal, columnIndex, columnIndex);
+}
+

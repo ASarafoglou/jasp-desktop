@@ -2,18 +2,21 @@ import QtQuick 2.9
 
 Item
 {
+	id: jaspColumnRoot
 	objectName: "Column"
-	property string __debugName: "JASPColumn"
+	property string __debugName: "JASPColumn " + columnName
 	property string columnName: "?"
 	property string columnIcon: ""
 
+	property real maxSize: 200
 	property real colScaler: 0.8
 	height:	filterConstructor.blockDim * colScaler
 	width:	colIcon.width + colName.width
 	property bool isNumerical: columnIcon.indexOf("scale") >= 0
+	property bool isOrdinal: columnIcon.indexOf("ordinal") >= 0
 		//columnIcon.indexOf("scale") >= 0 || columnIcon.indexOf("ordinal") >= 0
 
-	property var dragKeys: isNumerical ? ["number"] : ["string"]
+	property var dragKeys: isOrdinal ? ["string", "ordered"] : isNumerical ? ["number"] : ["string"]
 
 	Image
 	{
@@ -30,19 +33,23 @@ Item
 		anchors.margins: 4
 	}
 
+	TextMetrics { id: columnNameMeasure; text: columnName}
+
 	Text
 	{
 		id:colName
 		anchors.top: parent.top
 		anchors.left: colIcon.right
 		anchors.bottom: parent.bottom
-		width: contentWidth + 10
+		width: Math.min(columnNameMeasure.width + 10, jaspColumnRoot.maxSize)
 
 		font.pixelSize: filterConstructor.fontPixelSize * colScaler
 
 		leftPadding: 2
 
 		text: columnName
+		elide: Text.ElideMiddle
+
 	}
 
 	function shouldDrag(mouseX, mouseY)			{ return true }

@@ -1,23 +1,12 @@
-//import QtQuick.Controls 2.3
-//import QtQuick.Controls.Styles 1.4
+import QtQuick 2.9
 import QtQuick.Controls 1.4
-import QtQuick 2.7
+import QtQuick.Controls 2.2
 import QtQuick.Layouts 1.0
 
 Rectangle {
     SystemPalette { id: systemPalette; colorGroup: SystemPalette.Active }
     id: rootDataset
     color: systemPalette.window
-
-    //Fancy pants curvy gradient for the columnheaders and rownumbers.
-    Gradient{
-        id: myHeadersGradient
-        GradientStop { position: 0.2; color: systemPalette.midlight }
-        GradientStop { position: 0.5; color: systemPalette.light }
-        GradientStop { position: 0.9; color: systemPalette.midlight }
-        GradientStop { position: 1.0; color: systemPalette.mid }
-    }
-
 
     ProgressBarHolder
     {
@@ -36,12 +25,17 @@ Rectangle {
         anchors.bottom: rootDataset.bottom
 
         orientation: Qt.Vertical
-        visible: false
+		visible: false
 
         VariablesWindow
         {
             id: variablesWindow
-            headersGradient: myHeadersGradient
+			headersGradient: Gradient{
+				GradientStop { position: 0.0;	color: "#EEEEEE" }
+				GradientStop { position: 0.75;	color: "#EEEEEE" }
+				GradientStop { position: 0.77;	color: "#DDDDDD" }
+				GradientStop { position: 1.0;	color: "#DDDDDD" }
+			}
         }
 
         FilterWindow
@@ -52,15 +46,21 @@ Rectangle {
 			Layout.maximumHeight: rootDataset.height * 0.8
         }
 
-        DataTableView
-        {
-            id: dataTableView
-            Layout.fillHeight: true
-            headersGradient: myHeadersGradient
+		ComputeColumnWindow
+		{
+			id: computeColumnWindow
+			objectName: "computeColumnWindow"
+			Layout.maximumHeight: rootDataset.height * 0.8
+		}
+
+		DataTableView
+		{
+			objectName: "dataSetTableView"
+			Layout.fillHeight: true
+
+			signal dataTableDoubleClicked()
+
+			onDoubleClicked: dataTableDoubleClicked()
         }
-
 	}
-
-
-
 }

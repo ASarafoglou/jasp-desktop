@@ -3,7 +3,6 @@ windows:RC_FILE = $$PWD/icon.rc
 
 SOURCES += \
     $$PWD/aboutdialog.cpp \
-    $$PWD/activitylog.cpp \
     $$PWD/analyses.cpp \
     $$PWD/analysisforms/analysisform.cpp \
     $$PWD/appdirs.cpp \
@@ -11,17 +10,12 @@ SOURCES += \
     $$PWD/asyncloader.cpp \
     $$PWD/availablefields.cpp \
     $$PWD/backstage/authwidget.cpp \
-    $$PWD/backstage/backstagecomputer.cpp \
-    $$PWD/backstage/backstageosf.cpp \
     $$PWD/backstage/backstagepage.cpp \
     $$PWD/backstage/breadcrumbs.cpp \
     $$PWD/backstage/elidelabel.cpp \
     $$PWD/backstage/fsbmcomputer.cpp \
-    $$PWD/backstage/fsbmcurrent.cpp \
-    $$PWD/backstage/fsbmexamples.cpp \
     $$PWD/backstage/fsbmodel.cpp \
     $$PWD/backstage/fsbmosf.cpp \
-    $$PWD/backstage/fsbmrecent.cpp \
     $$PWD/backstage/fsbmrecentfolders.cpp \
     $$PWD/backstage/fsbrowser.cpp \
     $$PWD/backstage/fsentrywidget.cpp \
@@ -144,12 +138,33 @@ SOURCES += \
     $$PWD/asyncloaderthread.cpp \
     $$PWD/aboutdialogjsinterface.cpp \
     $$PWD/variablespage/labelfiltergenerator.cpp \
-    $$PWD/columnsmodel.cpp
+    $$PWD/columnsmodel.cpp \
+    $$PWD/datasetview.cpp \
+    $$PWD/jsonutilities.cpp \
+    $$PWD/backstage/backstagedatalibrary.cpp \
+    $$PWD/backstage/datalibrarylistmodel.cpp \
+    $$PWD/backstage/datalibrarybreadcrumbsmodel.cpp \
+    $$PWD/settings.cpp \
+    $$PWD/enginerepresentation.cpp \
+    $$PWD/computedcolumnsmodel.cpp \
+    $$PWD/filtermodel.cpp \
+    $$PWD/backstage/backstagerecentfiles.cpp \
+    $$PWD/backstage/recentfileslistmodel.cpp \
+    $$PWD/backstage/fsbmdatalibrary.cpp \
+    $$PWD/backstage/fsbmrecentfiles.cpp \
+    $$PWD/backstage/backstagecurrentfile.cpp \
+    $$PWD/backstage/currentfilelistmodel.cpp \
+    $$PWD/backstage/fsbmcurrentfile.cpp \
+    $$PWD/backstage/backstagecomputer.cpp \
+    $$PWD/backstage/computerlistmodel.cpp \
+    $$PWD/backstage/backstageosf.cpp \
+    $$PWD/backstage/osflistmodel.cpp \
+    $$PWD/backstage/osfbreadcrumbslistmodel.cpp
+
 
 
 HEADERS  += \
     $$PWD/aboutdialog.h \
-    $$PWD/activitylog.h \
     $$PWD/analyses.h \
     $$PWD/analysisforms/analysisform.h \
     $$PWD/appdirs.h \
@@ -157,17 +172,12 @@ HEADERS  += \
     $$PWD/asyncloader.h \
     $$PWD/availablefields.h \
     $$PWD/backstage/authwidget.h \
-    $$PWD/backstage/backstagecomputer.h \
-    $$PWD/backstage/backstageosf.h \
     $$PWD/backstage/backstagepage.h \
     $$PWD/backstage/breadcrumbs.h \
     $$PWD/backstage/elidelabel.h \
     $$PWD/backstage/fsbmcomputer.h \
-    $$PWD/backstage/fsbmcurrent.h \
-    $$PWD/backstage/fsbmexamples.h \
     $$PWD/backstage/fsbmodel.h \
     $$PWD/backstage/fsbmosf.h \
-    $$PWD/backstage/fsbmrecent.h \
     $$PWD/backstage/fsbmrecentfolders.h \
     $$PWD/backstage/fsbrowser.h \
     $$PWD/backstage/fsentry.h \
@@ -305,7 +315,29 @@ HEADERS  += \
     $$PWD/asyncloaderthread.h \
     $$PWD/aboutdialogjsinterface.h \
     $$PWD/variablespage/labelfiltergenerator.h \
-    $$PWD/columnsmodel.h
+    $$PWD/columnsmodel.h \
+    $$PWD/datasetview.h \
+    $$PWD/jsonutilities.h \
+    $$PWD/backstage/backstagedatalibrary.h \
+    $$PWD/backstage/datalibrarylistmodel.h \
+    $$PWD/backstage/datalibrarybreadcrumbsmodel.h \
+    $$PWD/settings.h \
+    $$PWD/enginerepresentation.h \
+    $$PWD/rscriptstore.h \
+    $$PWD/computedcolumnsmodel.h \
+    $$PWD/filtermodel.h \
+    $$PWD/backstage/backstagerecentfiles.h \
+    $$PWD/backstage/recentfileslistmodel.h \
+    $$PWD/backstage/fsbmdatalibrary.h \
+    $$PWD/backstage/fsbmrecentfiles.h \
+    $$PWD/backstage/backstagecurrentfile.h \
+    $$PWD/backstage/currentfilelistmodel.h \
+    $$PWD/backstage/fsbmcurrentfile.h \
+    $$PWD/backstage/backstagecomputer.h \
+    $$PWD/backstage/computerlistmodel.h \
+    $$PWD/backstage/backstageosf.h \
+    $$PWD/backstage/osflistmodel.h \
+    $$PWD/backstage/osfbreadcrumbslistmodel.h
 
 FORMS += \
     $$PWD/aboutdialog.ui \
@@ -314,16 +346,18 @@ FORMS += \
     $$PWD/mainwindow.ui \
     $$PWD/preferencesdialog.ui \
     $$PWD/ribbons/ribbonhome.ui \
-    $$PWD/variableswidget.ui \
     $$PWD/widgets/anovamodelwidget.ui \
     $$PWD/widgets/boundassignwidget.ui \
-    $$PWD/widgets/subjectivepriorswidget.ui
+    $$PWD/widgets/subjectivepriorswidget.ui \
+    $$PWD/backstage/backstageform.ui
 
 RESOURCES += \
     $$PWD/backstage/backstage.qrc \
     $$PWD/html/html.qrc \
     $$PWD/resources/icons.qrc \
-    $$PWD/resources/resources.qrc
+    $$PWD/resources/resources.qrc \
+    $$PWD/qml.qrc 
+
 
    unix:OTHER_FILES += $$PWD/icon.icns
 windows:OTHER_FILES += $$PWD/icon.rc
@@ -363,6 +397,7 @@ OTHER_FILES += \
     $$PWD/html/js/jquery-ui-1.10.1.custom.js \
     $$PWD/html/js/main.js \
     $$PWD/html/js/table.js \
+    $$PWD/html/js/htmlNode.js \
     $$PWD/html/js/utils.js \
     $$PWD/html/js/tables.js \
     $$PWD/html/js/underscore-min.js \
@@ -492,4 +527,23 @@ DISTFILES += \
     $$PWD/backstage/firsttabsstylesheet.qss \
     $$PWD/backstage/secondtabsstylesheet.qss \
     $$PWD/html/css/images/tinylogo.svg \
-    $$PWD/resources/icons/file-jasp.svg
+    $$PWD/resources/icons/file-jasp.svg \
+    $$PWD/html/js/analyses.js \
+    $$PWD/html/js/analysis.js \
+    $$PWD/html/js/backbone-1.1.2.js \
+    $$PWD/html/js/collection.js \
+    $$PWD/html/js/etch.js \
+    $$PWD/html/js/image.js \
+    $$PWD/html/js/jaspwidgets.js \
+    $$PWD/html/js/jquery-1.9.1.js \
+    $$PWD/html/js/jquery-ui-1.10.1.custom.js \
+    $$PWD/html/js/jquery-ui-1.10.1.custom.min.js \
+    $$PWD/html/js/main.js \
+    $$PWD/html/js/mrkdwn.js \
+    $$PWD/html/js/object.js \
+    $$PWD/html/js/qwebchannel.js \
+    $$PWD/html/js/table.js \
+    $$PWD/html/js/underscore-min.js \
+    $$PWD/html/js/underscore.js \
+    $$PWD/html/js/utils.js \
+    $$PWD/html/js/htmlNode.js

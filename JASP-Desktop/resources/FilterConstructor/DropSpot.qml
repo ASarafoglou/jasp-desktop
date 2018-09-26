@@ -1,4 +1,7 @@
-import QtQuick 2.0
+import QtQuick 2.9
+import QtQuick.Controls 2.2
+
+
 
 DropArea {
 	//Rectangle { color: "transparent"; border.color: "blue"; border.width: 1; anchors.fill: parent } //debug for size of the dropspots
@@ -12,10 +15,10 @@ DropArea {
 
 	width:  implicitWidth
 	height: implicitHeight
-	keys: dropKeys
+	keys: ["all"]
 	property real originalWidth: defaultText.length * filterConstructor.blockDim * 0.4
 	property bool acceptsDrops: true
-	property string defaultText: acceptsDrops ? "..." : shouldShowX ? "x" : ""
+	property string defaultText: acceptsDrops ? "..." : shouldShowX ? "y" : ""
 	property bool droppedShouldBeNested: false
 	property bool shouldShowX: false
 	property bool iWasChecked: false
@@ -23,14 +26,31 @@ DropArea {
 	implicitWidth: dropText.contentWidth
 	implicitHeight: filterConstructor.blockDim
 
+	readonly property color jaspBlue: "#14a1e3"
+	readonly property color jaspGreen: "#8cc63e"
+	property bool beingDragHovered: false
+	property color dragHoverColor: jaspBlue
+
+	Rectangle
+	{
+		id: dragMarker
+		z: -3
+		visible: containsDrag || beingDragHovered
+		radius: width
+		anchors.fill: parent
+		border.color: dragTarget.dragHoverColor
+		border.width: 3
+		color: "transparent"
+	}
+
 	function checkCompletenessFormulas()
 	{
 		iWasChecked = true
 
 		if(containsItem !== null)
 		{
-			if(containsItem.objectName !== "DragGeneric")
-				console.log("problem! ",parent.objectName," doesnt contain a dragger in dropper")
+			//if(containsItem.objectName !== "DragGeneric")
+				//console.log("problem! ",parent.objectName," doesnt contain a dragger in dropper")
 			return containsItem.checkCompletenessFormulas()
 		}
 		return false
@@ -38,6 +58,8 @@ DropArea {
 
 	onEntered:
 	{
+		//console.log(__debugName," onEntered DROPSPOT")
+
 		if((containsItem !== null && containsItem !== drag.source) || !acceptsDrops)
 		{
 			drag.accepted = false
@@ -45,7 +67,6 @@ DropArea {
 		}
 
 		var ancestry = parent
-
 		while(ancestry !== null)
 		{
 			if((ancestry.objectName == "DragGeneric" && ancestry.dragChild === drag.source) || ancestry == drag.source)
@@ -57,14 +78,27 @@ DropArea {
 			ancestry = ancestry.parent
 		}
 
+		var foundOneValidDragKey = false
+		for(var i=0; i<drag.source.dragKeys.length; i++)
+			if(dropKeys.indexOf(drag.source.dragKeys[i]) >= 0)
+				foundOneValidDragKey = true
+
+		beingDragHovered = true
+
+		dragHoverColor = foundOneValidDragKey ? jaspGreen : "red"
+
 		originalWidth = width
 		width = drag.source.width
 	}
 
 	onExited:
 	{
+		//console.log(__debugName," onExited DROPSPOT")
+
 		if(containsItem == null)
 			width = originalWidth
+
+		beingDragHovered = false
 	}
 
 	//onDropped: containsItem = drop.drag.source
@@ -72,14 +106,12 @@ DropArea {
 	property var containsItem: null
 
 	onContainsItemChanged: {
+		//console.log(__debugName," onContainsItemChanged")
+
 		if(containsItem === null)
 			width = Qt.binding(function(){ return dropText.contentWidth })
 		iWasChecked = false
 
-		if(containsItem === undefined)
-		{
-			console.log("containsItem for ",parent.objectName," just became undefined!")
-		}
 	}
 
 	Item
@@ -166,6 +198,7 @@ DropArea {
 
 			function setCreatedObjectUp(obj)
 			{
+				filterConstructor.somethingChanged = true
 				dragTarget.originalWidth = dragTarget.width
 				dragTarget.width = Qt.binding(function(){ return obj.width } )
 
@@ -177,11 +210,10 @@ DropArea {
 		{
 			id: errorMarker
 			z: -2
-			visible: dragTarget.iWasChecked && dragTarget.containsItem === null
+			visible: (dragTarget.iWasChecked && dragTarget.containsItem === null)
 			radius: width
 			anchors.fill: parent
 			color: "#BB0000"
-
 		}
 	}
 

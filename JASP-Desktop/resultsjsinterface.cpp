@@ -29,6 +29,7 @@
 #include "tempfiles.h"
 #include "analysis.h"
 #include <functional>
+#include "settings.h"
 
 ResultsJsInterface::ResultsJsInterface(QWidget *parent) : QObject(parent)
 {
@@ -54,8 +55,25 @@ ResultsJsInterface::ResultsJsInterface(QWidget *parent) : QObject(parent)
 void ResultsJsInterface::setZoom(double zoom)
 {
 	_webViewZoom = zoom;
+	QString js = "window.setZoom(" + QString::number(zoom) + ")";
+	runJavaScript(js);
 }
 
+void ResultsJsInterface::zoomIn()
+{
+	setZoom(_webViewZoom + 0.2);
+}
+
+void ResultsJsInterface::zoomOut()
+{
+	if (_webViewZoom >= 0.4)
+		setZoom(_webViewZoom - 0.2);
+}
+
+void ResultsJsInterface::zoomReset()
+{
+	setZoom(1);
+}
 
 
 void ResultsJsInterface::resultsPageLoaded(bool success)
@@ -66,10 +84,12 @@ void ResultsJsInterface::resultsPageLoaded(bool success)
 	if (success)
 	{
 		QString version = tq(AppInfo::version.asString());
-		runJavaScript("window.setAppVersion('" + version + "')");
+
 #ifdef JASP_DEBUG
 		version+="-Debug";
 #endif
+
+		runJavaScript("window.setAppVersion('" + version + "')");
 
 		setGlobalJsValues();
 
@@ -118,11 +138,11 @@ void ResultsJsInterface::showAnalysesMenu(QString options)
 	if (menuOptions["hasCopy"].asBool())
 		_analysisMenu->addAction(_copyIcon, "Copy", this, SLOT(copySelected()));
 
-	if (menuOptions["hasLatexCode"].asBool())  // TODO: || menuOptions["hasPlainText"].asBool())
+	if (menuOptions["hasLaTeXCode"].asBool())  // TODO: || menuOptions["hasPlainText"].asBool())
 	{
 		_copySpecialMenu = _analysisMenu->addMenu(tr("&Copy special"));
 
-		_copySpecialMenu->addAction(_codeIcon, "Latex code", this, SLOT(latexCodeSelected()));
+		_copySpecialMenu->addAction(_codeIcon, "LaTeX code", this, SLOT(latexCodeSelected()));
 
 		QAction *copyTextAction = new QAction("Copy text");
 		// connect(copyTextAction, SIGNAL(triggered), this, SLOT(copyTextSelected));
@@ -302,15 +322,13 @@ void ResultsJsInterface::setFixDecimalsHandler(QString numDecimals)
 
 void ResultsJsInterface::setGlobalJsValues()
 {
-	bool exactPValues = _mainWindow->_settings.value("exactPVals", 0).toBool();
+	bool exactPValues = Settings::value(Settings::EXACT_PVALUES).toBool();
 	QString exactPValueString = (exactPValues ? "true" : "false");
-	QString numDecimals = _mainWindow->_settings.value("numDecimals", 3).toString();
-	if (numDecimals.isEmpty())
-		numDecimals = "3";
+	QString numDecimals = Settings::value(Settings::NUM_DECIMALS).toString();
 	QString tempFolder = "file:///" + tq(tempfiles_sessionDirName());
 
 	QString js = "window.globSet.pExact = " + exactPValueString;
-	js += "; window.globSet.decimals = " + numDecimals;
+	js += "; window.globSet.decimals = " + (numDecimals.isEmpty() ? "\"\"" : numDecimals);
 	js += "; window.globSet.tempFolder = \"" + tempFolder + "/\"";
 	runJavaScript(js);
 }
@@ -530,6 +548,11 @@ void ResultsJsInterface::exportPreviewHTML()
 void ResultsJsInterface::exportHTML()
 {
 	runJavaScript("window.exportHTML('%EXPORT%');");
+}
+
+void ResultsJsInterface::openFileTab()
+{
+	_mainWindow->ui->tabBar->setCurrentTab("first");
 }
 
 QString ResultsJsInterface::escapeJavascriptString(const QString &str)

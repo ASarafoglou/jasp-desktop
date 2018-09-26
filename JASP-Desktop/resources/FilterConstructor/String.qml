@@ -4,7 +4,7 @@ Item
 {
 	objectName: "String"
 	property string __debugName: "String " + text
-	property string text: ""
+	property alias text: stringObj.text
 
 	height:	filterConstructor.blockDim
 	width:	stringObj.contentWidth
@@ -15,17 +15,15 @@ Item
 	TextInput
 	{
 		id: stringObj
-		text: parent.text
+		text: ""
 
 		anchors.horizontalCenter:	parent.horizontalCenter
 		anchors.verticalCenter:		parent.verticalCenter
 
 		font.pixelSize: filterConstructor.fontPixelSize
 
-
-		onAccepted:	if(text === "") destroyMe()
-		onActiveFocusChanged:	if(!activeFocus && text === "") destroyMe()
-
+		onAccepted: focus = false
+		onActiveFocusChanged:	if(!activeFocus) { if(text === "") destroyMe(); else filterConstructor.somethingChanged = true; }
 
 		function destroyMe()
 		{
@@ -33,6 +31,7 @@ Item
 				stringRoot.parent.releaseHere(scriptColumn)
 
 			stringRoot.parent.destroy()
+			filterConstructor.somethingChanged = true
 		}
 	}
 

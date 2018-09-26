@@ -18,6 +18,7 @@
 #ifndef ENGINE_H
 #define ENGINE_H
 
+#include "enginedefinitions.h"
 #include "dataset.h"
 #include "ipcchannel.h"
 #include "processinfo.h"
@@ -35,66 +36,105 @@
  * aborted, and the new one is set running.
  *
  * Additionally: an engine can run a filter and return the result of that to the dataset.
+ *
+ * Since 2018-06 (JCG): This is getting less and less accurate of a description but i am not about to change it right now.
  */
 
 class Engine
 {
 public:
-	explicit Engine();
-	
-public:
+	explicit Engine(int slaveNo, unsigned long parentPID);
+	static Engine * theEngine() { return _EngineInstance; } //There is only ever one engine in a process so we might as well have a static pointer to it.
+
 
 	void run();
-	void setSlaveNo(int no);
-	void applyFilter();
-	
-private:
-
 	bool receiveMessages(int timeout = 0);
+	void setSlaveNo(int no);
+	void sendString(std::string message) { _channel->send(message); }
+
+	typedef enum { empty, toInit, initing, inited, toRun, running, changed, complete, error, exception, aborted, stopped, saveImg, editImg} Status;
+	Status getStatus() { return _status; }
+	analysisResultStatus getStatusToAnalysisStatus();
+
+	void setColumnDataAsScale(std::string columnName, std::vector<double> scalarData)				{	provideDataSet()->columns()[columnName].overwriteDataWithScale(scalarData);		}
+	void setColumnDataAsOrdinal(std::string columnName, std::vector<int> ordinalData)				{	provideDataSet()->columns()[columnName].overwriteDataWithOrdinal(ordinalData);	}
+	void setColumnDataAsNominal(std::string columnName, std::vector<int> nominalData)				{	provideDataSet()->columns()[columnName].overwriteDataWithNominal(nominalData);	}
+	void setColumnDataAsNominalText(std::string columnName, std::vector<std::string> nominalData)	{	provideDataSet()->columns()[columnName].overwriteDataWithNominal(nominalData);	}
+
+private:
+// Methods:
+	void receiveFilterMessage(			Json::Value jsonRequest);
+	void receiveRCodeMessage(			Json::Value jsonRequest);
+	void receiveComputeColumnMessage(	Json::Value jsonRequest);
+	void receiveAnalysisMessage(		Json::Value jsonRequest);
+
 	void runAnalysis();
+	void runRCode();
+	void runFilter();
+	void runComputeColumn();
+
+	void removeNonKeepFiles(Json::Value filesToKeepValue);
 	void saveImage();
     void editImage();
-	void sendResults();
-	void sendFilterResult(std::vector<bool> filterResult);
+
+	void sendAnalysisResults();
+
+	void sendFilterResult(std::vector<bool> filterResult, std::string warning = "");
 	void sendFilterError(std::string errorMessage);
-	void evalRCode(const std::string &rCode);
+
+
 	void sendRCodeResult(std::string rCodeResult);
 	void sendRCodeError();
+
 	std::string callback(const std::string &results, int progress);
 
 	DataSet *provideDataSet();
-	void provideTempFileName(const std::string &extension, std::string &root, std::string &relativePath);
-	void provideStateFileName(std::string &root, std::string &relativePath);
 
-	typedef enum { empty, toInit, initing, inited, toRun, running, changed, complete, error, exception, aborted, stopped, saveImg, editImg} Status;
+	void provideTempFileName(const std::string &extension, std::string &root, std::string &relativePath);
+	void provideStateFileName(std::string &root,		std::string &relativePath);
+	void provideJaspResultsFileName(std::string &root,	std::string &relativePath);
+
+// Data:
+	static Engine * _EngineInstance;
 
 	Status _status = empty;
 
-	int _analysisId;
-	int _analysisRevision;
-	int _progress;
-	std::string _analysisName;
-	std::string _analysisTitle;
-	bool _analysisRequiresInit;
-	std::string _analysisDataKey;
-	std::string _analysisOptions;
-	std::string _analysisResultsMeta;
-	std::string _analysisStateKey;
-	std::string _analysisResultsString;
-	Json::Value _imageOptions;
-	int _ppi = 96;
 
-	bool _currentAnalysisKnowsAboutChange;
+	int			_analysisId,
+				_analysisRevision,
+				_progress,
+				_ppi = 96,
+				_slaveNo = 0,
+				_rCodeRequestId = -1,
+				_filterRequestId = -1;
 
-	Json::Value _analysisResults;
+	bool		_analysisRequiresInit,
+				_analysisJaspResults,
+				_currentAnalysisKnowsAboutChange;
+
+	std::string _analysisName,
+				_analysisTitle,
+				_analysisDataKey,
+				_analysisOptions,
+				_analysisResultsMeta,
+				_analysisStateKey,
+				_analysisResultsString,
+				_filter = "",
+				_generatedFilter = "",
+				_rCode = "",
+				_computeColumnCode = "",
+				_computeColumnName = "";
+
+	Column::ColumnType		_computeColumnType = Column::ColumnTypeUnknown;
+
+	Json::Value _imageOptions,
+				_analysisResults;
 
 	IPCChannel *_channel = NULL;
-	DataSet *_dataSet = NULL;
 
-	int _slaveNo = 0;
+	unsigned long _parentPID = 0;
 
-	bool filterChanged = false;
-	std::string filter = "", generatedFilter = "";
+	engineState currentEngineState = engineState::idle;
 };
 
 #endif // ENGINE_H

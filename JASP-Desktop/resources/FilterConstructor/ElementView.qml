@@ -5,7 +5,9 @@ ListView {
 	property string __debugName: "ElementView"
 	//clip: true
 
-
+	property real maxWidth: 200
+	property real widthMargin: 10
+	spacing: 4
 
 	delegate: MouseArea
 	{
@@ -19,12 +21,23 @@ ListView {
 		{
 			var obj = null
 
-			if(type == "operator")			obj = operatorComp.createObject(scriptColumn,		{ "toolTipText": toolTip, "alternativeDropFunction": null, "operator": operator,			"acceptsDrops": true})
-			else if(type == "operatorvert")	obj = operatorvertComp.createObject(scriptColumn,	{ "toolTipText": toolTip, "alternativeDropFunction": null, "operator": operator,			"acceptsDrops": true})
-			else if(type == "function")		obj = functionComp.createObject(scriptColumn,		{ "toolTipText": toolTip, "alternativeDropFunction": null, "functionName": functionName,	"acceptsDrops": true, "parameterNames": functionParameters.split(","), "parameterDropKeys": functionParamTypes.split(",") })
-			else if(type == "number")		obj = numberComp.createObject(scriptColumn,			{ "toolTipText": toolTip, "alternativeDropFunction": null, "value": number,					"acceptsDrops": true})
-			else if(type == "string")		obj = stringComp.createObject(scriptColumn,			{ "toolTipText": toolTip, "alternativeDropFunction": null, "text": text,					"acceptsDrops": true})
-			else if(type == "column")		obj = columnComp.createObject(scriptColumn,			{ "toolTipText": toolTip, "alternativeDropFunction": null, "columnName": columnName,		"acceptsDrops": true,	"columnIcon": columnIcon})
+			//console.log("alternativeDropFunctionDef(",caller.__debugName,") type == ", type)
+
+			var _operator = undefined, _functionName = undefined, _parameterNames = undefined, _parameterDropKeys = undefined, _value = undefined, _text = undefined, _columnName = undefined, _columnIcon = undefined;
+
+			if(type == "operator")			{ _operator = operator }
+			else if(type == "operatorvert")	{ _operator = operator }
+			else if(type == "function")		{ _functionName = functionName; _parameterNames = functionParameters.split(","); _parameterDropKeys = functionParamTypes.split(",") }
+			else if(type == "number")		{ _value = number }
+			else if(type == "string")		{ _text = text }
+			else if(type == "column")		{ _columnName = columnName; _columnIcon = columnIcon }
+
+			if(type == "operator")			obj = operatorCompBetterContext.createObject(scriptColumn,		{ "toolTipText": toolTip, "alternativeDropFunction": null, "operator": _operator,			"acceptsDrops": true})
+			else if(type == "operatorvert")	obj = operatorvertCompBetterContext.createObject(scriptColumn,	{ "toolTipText": toolTip, "alternativeDropFunction": null, "operator": _operator,			"acceptsDrops": true})
+			else if(type == "function")		obj = functionCompBetterContext.createObject(scriptColumn,		{ "toolTipText": toolTip, "alternativeDropFunction": null, "functionName": _functionName,	"acceptsDrops": true, "parameterNames": _parameterNames, "parameterDropKeys": _parameterDropKeys })
+			else if(type == "number")		obj = numberCompBetterContext.createObject(scriptColumn,		{ "toolTipText": toolTip, "alternativeDropFunction": null, "value": _value,					"acceptsDrops": true})
+			else if(type == "string")		obj = stringCompBetterContext.createObject(scriptColumn,		{ "toolTipText": toolTip, "alternativeDropFunction": null, "text": _text,					"acceptsDrops": true})
+			else if(type == "column")		obj = columnCompBetterContext.createObject(scriptColumn,		{ "toolTipText": toolTip, "alternativeDropFunction": null, "columnName": _columnName,		"acceptsDrops": true,	"columnIcon": columnIcon})
 
 			return obj
 		}
@@ -45,7 +58,7 @@ ListView {
 			property string listToolTip:		type !== "separator" && type !== "text" ? toolTip : ""
 
 			//anchors.centerIn: parent
-			x: isColumn ? 0 : (parent.width - width)
+			x: isColumn ? listOfStuff.widthMargin / 2 : (parent.width - width) - (listOfStuff.widthMargin / 2)
 
 			sourceComponent: type === "operator" ?
 								 operatorComp :
@@ -65,9 +78,11 @@ ListView {
 
 			onLoaded:
 			{
+				//console.log("elementLoader onLoaded")
 
-				if(listOfStuff.orientation !== ListView.Horizontal && listOfStuff.width < width)
-					listOfStuff.width = width
+				if(listOfStuff.orientation !== ListView.Horizontal && listOfStuff.width < width + listOfStuff.widthMargin)
+					listOfStuff.width = width + listOfStuff.widthMargin
+
 			}
 		}
 
@@ -78,11 +93,18 @@ ListView {
 		Component { id: functionComp;		FunctionDrag			{ toolTipText: listToolTip; functionName: listFunction;	acceptsDrops: false;	alternativeDropFunction: alternativeDropFunctionDef } }
 		Component { id: numberComp;			NumberDrag				{ toolTipText: listToolTip; value: listNumber;									alternativeDropFunction: alternativeDropFunctionDef } }
 		Component { id: stringComp;			StringDrag				{ toolTipText: listToolTip; text: listText;										alternativeDropFunction: alternativeDropFunctionDef } }
-		Component { id: separatorComp;		Item					{ height: filterConstructor.blockDim; width: listWidth; Rectangle { height: 1; color: "black"; width: listWidth ; anchors.centerIn: parent }  } }
+		Component { id: separatorComp;		Item					{ height: filterConstructor.blockDim; width: listWidth - listOfStuff.widthMargin; Rectangle { height: 1; color: "black"; width: parent.width ; anchors.centerIn: parent }  } }
 		Component { id: defaultComp;		Text					{ text: "Something wrong!"; color: "red" }  }
 		Component {	id: columnComp;			ColumnDrag				{ toolTipText: listToolTip; columnName: listColName; columnIcon: listColIcon;		alternativeDropFunction: alternativeDropFunctionDef } }
-
-
-
 	}
+
+
+	Component { id: operatorCompBetterContext;		OperatorDrag			{ } }
+	Component { id: operatorvertCompBetterContext;	OperatorVerticalDrag	{ } }
+	Component { id: functionCompBetterContext;		FunctionDrag			{ } }
+	Component { id: numberCompBetterContext;		NumberDrag				{ } }
+	Component { id: stringCompBetterContext;		StringDrag				{ } }
+	Component { id: separatorCompBetterContext;		Item					{ } }
+	Component { id: defaultCompBetterContext;		Text					{ } }
+	Component {	id: columnCompBetterContext;		ColumnDrag				{ } }
 }

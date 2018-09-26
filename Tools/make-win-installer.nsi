@@ -5,7 +5,7 @@
 !include "nsProcess.nsh"
 !include "x64.nsh"
 
-!define VERSION "0.9.0.0"
+!define VERSION "0.9.1.0"
 !define APP_NAME "JASP"
 !define INSTALLER_NAME "${APP_NAME}-${VERSION}-Setup.exe"
 !define CONTENTS_DIR "C:\Jasp\Install"
@@ -180,8 +180,10 @@ SetOverwrite ifnewer
 
 ${If} ${RunningX64}
 	!include includeFiles64.nsi
+	ExecWait '"$INSTDIR\vcredist_x64.exe" /passive /norestart'
 ${else}
 	!include includeFiles32.nsi
+	ExecWait '"$INSTDIR\vcredist_x86.exe" /passive /norestart'
 ${EndIf}
 
 SectionEnd
