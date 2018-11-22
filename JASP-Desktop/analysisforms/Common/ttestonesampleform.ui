@@ -413,7 +413,7 @@
          </sizepolicy>
         </property>
         <property name="title">
-         <string>Hypothesis</string>
+         <string>Alt. Hypothesis</string>
         </property>
         <property name="flat">
          <bool>false</bool>
@@ -700,11 +700,11 @@
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
-           <property name="text">
-            <string>Std. deviation:  </string>
-           </property>
            <property name="visible">
             <bool>false</bool>
+           </property>
+           <property name="text">
+            <string>Std. deviation:  </string>
            </property>
           </widget>
          </item>
@@ -903,12 +903,6 @@
    <header>widgets/availablefieldslistview.h</header>
   </customwidget>
   <customwidget>
-   <class>GroupBox</class>
-   <extends>QGroupBox</extends>
-   <header>widgets/groupbox.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
    <class>BoundTextBox</class>
    <extends>QLineEdit</extends>
    <header>widgets/boundtextbox.h</header>
@@ -928,6 +922,12 @@
    <class>BoundListView</class>
    <extends>QListView</extends>
    <header>widgets/boundlistview.h</header>
+  </customwidget>
+  <customwidget>
+   <class>GroupBox</class>
+   <extends>QGroupBox</extends>
+   <header>widgets/groupbox.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <tabstops>

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>592</width>
+    <width>594</width>
     <height>687</height>
    </rect>
   </property>
@@ -514,7 +514,7 @@
          <item row="2" column="1">
           <widget class="BoundGroupBox" name="hypothesis">
            <property name="title">
-            <string>Hypothesis</string>
+            <string>Alt. Hypothesis</string>
            </property>
            <property name="flat">
             <bool>false</bool>
@@ -764,12 +764,6 @@
    <header>widgets/availablefieldslistview.h</header>
   </customwidget>
   <customwidget>
-   <class>GroupBox</class>
-   <extends>QGroupBox</extends>
-   <header>widgets/groupbox.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
    <class>BoundTextBox</class>
    <extends>QLineEdit</extends>
    <header>widgets/boundtextbox.h</header>
@@ -779,11 +773,6 @@
    <extends>QGroupBox</extends>
    <header>widgets/boundgroupbox.h</header>
    <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>ExpanderButton</class>
-   <extends>QPushButton</extends>
-   <header>widgets/expanderbutton.h</header>
   </customwidget>
   <customwidget>
    <class>BoundCheckBox</class>
@@ -796,9 +785,20 @@
    <header>widgets/boundlistview.h</header>
   </customwidget>
   <customwidget>
+   <class>GroupBox</class>
+   <extends>QGroupBox</extends>
+   <header>widgets/groupbox.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>ExpanderButton</class>
+   <extends>QPushButton</extends>
+   <header>widgets/expanderbutton.h</header>
+  </customwidget>
+  <customwidget>
    <class>SubjectivePriorsWidget</class>
    <extends>QWidget</extends>
-   <header location="global">widgets/subjectivepriorswidget.h</header>
+   <header>widgets/subjectivepriorswidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>474</width>
-    <height>463</height>
+    <height>480</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -201,7 +201,7 @@
       <item row="0" column="0">
        <widget class="BoundGroupBox" name="hypothesis">
         <property name="title">
-         <string>Hypothesis</string>
+         <string>Alt. Hypothesis</string>
         </property>
         <property name="flat">
          <bool>true</bool>
@@ -468,7 +468,7 @@
   <customwidget>
    <class>SubjectivePriorsWidget</class>
    <extends>QWidget</extends>
-   <header location="global">widgets/subjectivepriorswidget.h</header>
+   <header>widgets/subjectivepriorswidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

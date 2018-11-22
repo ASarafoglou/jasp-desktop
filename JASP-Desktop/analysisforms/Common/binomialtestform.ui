@@ -328,7 +328,7 @@
       </sizepolicy>
      </property>
      <property name="title">
-      <string>Hypothesis</string>
+      <string>Alt. Hypothesis</string>
      </property>
      <property name="flat">
       <bool>false</bool>

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>504</width>
-    <height>479</height>
+    <height>502</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -222,7 +222,7 @@
       <item row="0" column="0">
        <widget class="BoundGroupBox" name="hypothesis">
         <property name="title">
-         <string>Hypothesis</string>
+         <string>Alt. Hypothesis</string>
         </property>
         <property name="flat">
          <bool>true</bool>
@@ -441,6 +441,12 @@
    <header>widgets/boundcheckbox.h</header>
   </customwidget>
   <customwidget>
+   <class>GroupBox</class>
+   <extends>QGroupBox</extends>
+   <header>widgets/groupbox.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
    <class>ExpanderButton</class>
    <extends>QPushButton</extends>
    <header>widgets/expanderbutton.h</header>
@@ -448,13 +454,7 @@
   <customwidget>
    <class>SubjectivePriorsWidget</class>
    <extends>QWidget</extends>
-   <header location="global">widgets/subjectivepriorswidget.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>GroupBox</class>
-   <extends>QGroupBox</extends>
-   <header>widgets/groupbox.h</header>
+   <header>widgets/subjectivepriorswidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

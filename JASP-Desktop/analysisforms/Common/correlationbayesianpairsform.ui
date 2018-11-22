@@ -248,7 +248,7 @@
          <item row="0" column="0">
           <widget class="BoundGroupBox" name="hypothesis">
            <property name="title">
-            <string>Hypothesis</string>
+            <string>Alt. Hypothesis</string>
            </property>
            <property name="flat">
             <bool>true</bool>
@@ -578,12 +578,6 @@
    <header>widgets/availablefieldslistview.h</header>
   </customwidget>
   <customwidget>
-   <class>GroupBox</class>
-   <extends>QGroupBox</extends>
-   <header>widgets/groupbox.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
    <class>BoundTextBox</class>
    <extends>QLineEdit</extends>
    <header>widgets/boundtextbox.h</header>
@@ -598,6 +592,12 @@
    <class>BoundCheckBox</class>
    <extends>QCheckBox</extends>
    <header>widgets/boundcheckbox.h</header>
+  </customwidget>
+  <customwidget>
+   <class>GroupBox</class>
+   <extends>QGroupBox</extends>
+   <header>widgets/groupbox.h</header>
+   <container>1</container>
   </customwidget>
   <customwidget>
    <class>BoundPairsTable</class>

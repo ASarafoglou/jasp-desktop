@@ -290,7 +290,7 @@
       <item row="1" column="0">
        <widget class="BoundGroupBox" name="hypothesis">
         <property name="title">
-         <string>Hypothesis</string>
+         <string>Alt. Hypothesis</string>
         </property>
         <property name="flat">
          <bool>true</bool>
