@@ -110,11 +110,11 @@ SummaryStatsBinomialTestBayesian <- function(jaspResults, dataset = NULL, option
   # set title for different Bayes factor types
   if (options$bayesFactorType == "BF01") {
     
-    if (tableResults$hypothesis == "two.sided") 
+    if (hypothesis == "two.sided") 
       bf.title <- "BF\u2080\u2081"
-    else if (tableResults$hypothesis == "greater")
+    else if (hypothesis == "greater")
       bf.title <- "BF\u2080\u208A"
-    else if (tableResults$hypothesis == "less")
+    else if (hypothesis == "less")
       bf.title <- "BF\u2080\u208B"
     
   } else if (options$bayesFactorType == "BF10") {
@@ -136,7 +136,6 @@ SummaryStatsBinomialTestBayesian <- function(jaspResults, dataset = NULL, option
       bf.title <- "Log(\u0042\u0046\u208B\u2080)"
     
   }
-  
   # set table citations and footnote message for different hypothesis types
   bayesianBinomialTable$addCitation(.summaryStatsCitations[c("Jeffreys1961", "OHagan2004", "Haldane1932")])
   
@@ -241,6 +240,6 @@ SummaryStatsBinomialTestBayesian <- function(jaspResults, dataset = NULL, option
 
 .summaryStatsCitations <- c(
   "Jeffreys1961" = "Jeffreys, H. (1961). Theory of Probability. Oxford, Oxford University Press.",
-  "OHagan2004"   =   "O'Hagan, A., & Forster, J. (2004). Kendall's advanced theory of statistics vol. 2B: Bayesian inference (2nd ed.). London: Arnold.",
-  "Haldane1932"  =   "Haldane, J. B. S. (1932). A note on inverse probability. Mathematical Proceedings of the Cambridge Philosophical Society, 28, 55-61."
+  "OHagan2004"   = "O'Hagan, A., & Forster, J. (2004). Kendall's advanced theory of statistics vol. 2B: Bayesian inference (2nd ed.). London: Arnold.",
+  "Haldane1932"  = "Haldane, J. B. S. (1932). A note on inverse probability. Mathematical Proceedings of the Cambridge Philosophical Society, 28, 55-61."
 )
