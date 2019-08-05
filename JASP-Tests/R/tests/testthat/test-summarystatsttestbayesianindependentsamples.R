@@ -9,7 +9,7 @@ test_that("Main table results match", {
   options$bayesFactorType <- "LogBF10"
   results <- jasptools::run("SummaryStatsTTestBayesianIndependentSamples", "debug.csv", options)
   
-  table <- results[["results"]][["bayesianIndependentTTestTable"]][["data"]]
+  table <- results[["results"]][["indSamplesTTestTable"]][["data"]]
   expect_equal_tables(table, list(0.816974431461627, 2.3, 10, 0.000287271873137224, 0.0318022759865702,
                                   13))
 })

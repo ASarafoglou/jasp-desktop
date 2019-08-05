@@ -51,7 +51,7 @@ SummaryStatsTTestBayesianIndependentSamples <- function(jaspResults, dataset = N
   # Conduct frequentist and Bayesian independent samples t-test
   ttestResults <- .generalSummaryTtestBF(options = options, paired = FALSE)
   BF10         <- ttestResults$bf
-  browser()
+  
   BFlist       <- list(BF10    = BF10,
                        BF01    = 1/BF10,
                        LogBF10 = log(BF10))
@@ -132,8 +132,8 @@ SummaryStatsTTestBayesianIndependentSamples <- function(jaspResults, dataset = N
   if (!is.null(message)) indSamplesTTestTable$addFootnote(message)
   
   indSamplesTTestTable$addColumnInfo(name = "t"        , title = "t"         , type = "number", format = "sf:4;dp:3")
-  indSamplesTTestTable$addColumnInfo(name = "n1"       , title = "n\u2081"   , type = "number")
-  indSamplesTTestTable$addColumnInfo(name = "n2"       , title = "n\u2082"   , type = "number")
+  indSamplesTTestTable$addColumnInfo(name = "n1"       , title = "n\u2081"   , type = "integer")
+  indSamplesTTestTable$addColumnInfo(name = "n2"       , title = "n\u2082"   , type = "integer")
   indSamplesTTestTable$addColumnInfo(name = "BF"       , title = bfTitle     , type = "number", format = "sf:4;dp:3")
   indSamplesTTestTable$addColumnInfo(name = "error"    , title = "error %"   , type = "number", format = "sf:4;dp:3")
   indSamplesTTestTable$addColumnInfo(name = "pValue"   , title = "p"         , type = "number", format = "sf:4;dp:3")
