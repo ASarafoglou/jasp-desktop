@@ -38,9 +38,9 @@ SummaryStatsBinomialTestBayesian <- function(jaspResults, dataset = NULL, option
     return(jaspResults[["stateSummaryStatsBinomialResults"]]$object)
   
   # This will be the object that we fill with results
-  results        <- list(hypothesis = NULL,
-                         binomTable = list(),
-                         binomPlot  = list())
+  results        <- list(hypothesisList = list(),
+                         binomTable     = list(),
+                         binomPlot      = list())
     
   # Run the binomial test
   a         <- options$betaPriorParamA
@@ -50,14 +50,11 @@ SummaryStatsBinomialTestBayesian <- function(jaspResults, dataset = NULL, option
   n         <- successes + failures
   theta0    <- options$testValue
   
-  if (options$hypothesis == "notEqualToTestValue") 
-    hypothesis <- "two.sided"
-  else if (options$hypothesis == "greaterThanTestValue")
-    hypothesis <- "greater"
-  else
-    hypothesis <- "less"
+  # Extract hypothesis
+  hypothesisList <- .hypothesisType.summarystats.binomial(hypothesis = options$hypothesis, theta0, bayesFactorType = options$bayesFactorType)
+  hypothesis      <- hypothesisList$hypothesis
   
-  # conduct frequentist and Bayesian binomial test
+  # Conduct frequentist and Bayesian binomial test
   pValue <- stats::binom.test(x = successes, n = n, p = theta0, alternative = hypothesis)$p.value
   BF10   <- .bayesBinomialTest(counts = successes, n = n, theta0 = theta0, hypothesis = hypothesis, a = a, b = b)
   
@@ -66,7 +63,7 @@ SummaryStatsBinomialTestBayesian <- function(jaspResults, dataset = NULL, option
                  LogBF10 = log(BF10))
   
   # Add results to results object
-  results[["hypothesis"]] <- hypothesis
+  results[["hypothesisList"]] <- hypothesisList
   results[["binomTable"]] <- list(
     successes = successes,
     failures  = failures,
@@ -99,8 +96,9 @@ SummaryStatsBinomialTestBayesian <- function(jaspResults, dataset = NULL, option
   tableResults <- summaryStatsBinomialResults[["binomTable"]]
   
   # extract important parameters
-  theta0       <- tableResults$theta0
-  hypothesis   <- summaryStatsBinomialResults[["hypothesis"]]
+  theta0         <- tableResults$theta0
+  hypothesisList <- summaryStatsBinomialResults[["hypothesisList"]]
+  hypothesis     <- hypothesisList$hypothesis
   
   # create table and state dependencies
   bayesianBinomialTable <- createJaspTable("Bayesian Binomial Test")
@@ -108,63 +106,22 @@ SummaryStatsBinomialTestBayesian <- function(jaspResults, dataset = NULL, option
   bayesianBinomialTable$position <- 1
   
   # set title for different Bayes factor types
-  if (options$bayesFactorType == "BF01") {
-    
-    if (hypothesis == "two.sided") 
-      bf.title <- "BF\u2080\u2081"
-    else if (hypothesis == "greater")
-      bf.title <- "BF\u2080\u208A"
-    else if (hypothesis == "less")
-      bf.title <- "BF\u2080\u208B"
-    
-  } else if (options$bayesFactorType == "BF10") {
-    
-    if (hypothesis == "two.sided")
-      bf.title <- "BF\u2081\u2080"
-    else if (hypothesis == "greater")
-      bf.title <- "BF\u208A\u2080"
-    else if (hypothesis == "less")
-      bf.title <- "BF\u208B\u2080"
-    
-  } else if (options$bayesFactorType == "LogBF10") {
-    
-    if (hypothesis == "two.sided")
-      bf.title <- "Log(\u0042\u0046\u2081\u2080)"
-    else if (hypothesis == "greater")
-      bf.title <-"Log(\u0042\u0046\u208A\u2080)"
-    else if (hypothesis == "less")
-      bf.title <- "Log(\u0042\u0046\u208B\u2080)"
-    
-  }
+  bfTitle <- hypothesisList$bfTitle
+
   # set table citations and footnote message for different hypothesis types
   bayesianBinomialTable$addCitation(.summaryStatsCitations[c("Jeffreys1961", "OHagan2004", "Haldane1932")])
   
-  if (hypothesis == "two.sided") {
-    
-    message <- paste0("Proportions tested against value: ", theta0, ".")
-    bayesianBinomialTable$addFootnote(message)
-    
-  } else if (hypothesis == "greater") {
-    
-    note <- "For all tests, the alternative hypothesis specifies that the proportion is greater than "
-    message <- paste0(note, theta0, ".")
-    bayesianBinomialTable$addFootnote(message)
-    
-  } else if (hypothesis == "less") {
-    
-    note <- "For all tests, the alternative hypothesis specifies that the proportion is less than "
-    message <- paste0(note, theta0, ".")
-    bayesianBinomialTable$addFootnote(message)
-    
-  }
+  message <- hypothesisList$message
+  if (!is.null(message)) bayesianBinomialTable$addFootnote(message)
   
   bayesianBinomialTable$addColumnInfo(name = "successes", title = "Successes" , type = "integer")
   bayesianBinomialTable$addColumnInfo(name = "failures" , title = "Failures"  , type = "integer")
   bayesianBinomialTable$addColumnInfo(name = "theta0"   , title = "Test value", type = "number", format = "sf:4;dp:3")
-  bayesianBinomialTable$addColumnInfo(name = "BF"       , title = bf.title    , type = "number", format = "sf:4;dp:3")
+  bayesianBinomialTable$addColumnInfo(name = "BF"       , title = bfTitle     , type = "number", format = "sf:4;dp:3")
   bayesianBinomialTable$addColumnInfo(name = "pValue"   , title = "p"         , type = "number", format = "sf:4;dp:3")
   
-  # set common error messages in results table
+  errorMessageTable <- NULL
+  
   if (theta0 == 1 && hypothesis == "greater") {
     
     errorMessageTable <- "Cannot test the hypothesis that the test value is greater than 1."
@@ -176,26 +133,21 @@ SummaryStatsBinomialTestBayesian <- function(jaspResults, dataset = NULL, option
   
   jaspResults[["bayesianBinomialTable"]] <- bayesianBinomialTable
   
-  # extract rows from summaryStatsBinomialResults
+  if (!is.null(errorMessageTable))
+    .quitAnalysis(errorMessageTable)
+  
+  # extract rows from tableResults
   bayesianBinomialTable$addRows(tableResults)
 }
 
 # Prior and Posterior plot ----
 .summaryStatsBinomialPlot <- function(jaspResults, options, summaryStatsBinomialResults) {
   
-  plotResults <- summaryStatsBinomialResults[["binomPlot"]]
-  hypothesis  <- summaryStatsBinomialResults[["hypothesis"]]
-  
-  if (hypothesis == "two.sided") {
-    bfSubscripts <- "BF[1][0]"
-  }
-  else if (hypothesis == "greater"){
-    bfSubscripts <- "BF['+'][0]"
-  }
-  else if (hypothesis == "less"){
-    bfSubscripts <- "BF['-'][0]"
-  }
-  
+  plotResults    <- summaryStatsBinomialResults[["binomPlot"]]
+  hypothesisList <- summaryStatsBinomialResults[["hypothesisList"]]
+  hypothesis     <- hypothesisList$hypothesis
+  bfSubscripts   <- hypothesisList$bfSubscripts
+
   # extract parameters needed for prior and posterior plot
   a         <- plotResults$a
   b         <- plotResults$b
@@ -211,8 +163,8 @@ SummaryStatsBinomialTestBayesian <- function(jaspResults, dataset = NULL, option
     CIlower         <- quantiles$ci.lower
     CIupper         <- quantiles$ci.upper
     ppCri           <- c(CIlower, CIupper)
-    dfLinesPP       <- .dfLinesPP( a = a, b = b, hyp = hypothesis, theta0 = theta0, counts = successes, n = n)
-    dfPointsPP      <- .dfPointsPP(a = a, b = b, hyp = hypothesis, theta0 = theta0, counts = successes, n = n)
+    dfLinesPP       <- .dfLinesPP(dataset = NULL, a = a, b = b, hyp = hypothesis, theta0 = theta0, counts = successes, n = n)
+    dfPointsPP      <- .dfPointsPP(dataset = NULL, a = a, b = b, hyp = hypothesis, theta0 = theta0, counts = successes, n = n)
     xName           <- expression(paste("Population proportion ", theta))
     
     if(options$plotPriorAndPosteriorAdditionalInfo){
@@ -238,12 +190,35 @@ SummaryStatsBinomialTestBayesian <- function(jaspResults, dataset = NULL, option
   }
 }
 
-# citations for summary stats module
-.summaryStatsCitations <- c(
-  "MoreyRounder2015"  = "Morey, R. D., & Rouder, J. N. (2015). BayesFactor (Version 0.9.11-3)[Computer software].",
-  "RounderEtAl2009"   = "Rouder, J. N., Speckman, P. L., Sun, D., Morey, R. D., & Iverson, G. (2009). Bayesian t tests for accepting and rejecting the null hypothesis. Psychonomic Bulletin & Review, 16, 225–237.",
-  "GronauEtAl2017"    = "Gronau, Q. F., Ly, A., & Wagenmakers, E.-J. (2017). Informed Bayesian T-Tests. The American Statistician.",
-  "Jeffreys1961"      = "Jeffreys, H. (1961). Theory of Probability. Oxford, Oxford University Press.",
-  "OHaganForster2004" = "O'Hagan, A., & Forster, J. (2004). Kendall's advanced theory of statistics vol. 2B: Bayesian inference (2nd ed.). London: Arnold.",
-  "Haldane1932"       = "Haldane, J. B. S. (1932). A note on inverse probability. Mathematical Proceedings of the Cambridge Philosophical Society, 28, 55-61."
-)
+# helper functions
+.hypothesisType.summarystats.binomial <- function(hypothesis_option, theta0, bayesFactorType) {
+  if (hypothesis_option == "notEqualToTestValue") {
+    
+    hypothesis_for_common_functions   <- "twoSided"
+    hypothesis                        <- "two.sided"
+    message <- paste0("Proportions tested against value: ", theta0, ".")
+    
+  } else if (hypothesis_option == "greaterThanTestValue") {
+    
+    hypothesis_for_common_functions   <- "plusSided"
+    hypothesis                        <- "greater"
+    message <- paste0("For all tests, the alternative hypothesis specifies that the proportion is greater than ", theta0, ".")
+    
+  } else if (hypothesis_option == "lessThanTestValue") {
+    
+    hypothesis_for_common_functions   <- "minSided"
+    hypothesis                        <- "less"
+    message <- paste0("For all tests, the alternative hypothesis specifies that the proportion is less than ", theta0, ".")
+    
+  }
+  
+  bfSubscripts <- .setBFsubscripts.summarystats(hypothesis_for_common_functions)
+  bfTitle      <- .getBayesfactorTitle.summarystats(bayesFactorType, hypothesis_for_common_functions)
+  
+  hypothesisList <- list(hypothesis    = hypothesis,
+                          message      = message,
+                          bfSubscripts = bfSubscripts,
+                          bfTitle      = bfTitle)
+  
+  return(hypothesisList)
+}

@@ -24,8 +24,8 @@ SummaryStatsTTestBayesianIndependentSamples <- function(jaspResults, dataset = N
   summaryStatsIndSamplesResults <- .summaryStatsIndSamplesComputeResults(jaspResults, options)
   
   # # Output tables and plots
-  .summaryStatsIndSamplesTableMain(jaspResults, options, summaryStatsIndSamplesResults)
-  .summaryStatsIndSamplesPriorPosteriorPlot(    jaspResults, options, summaryStatsIndSamplesResults)
+  .summaryStatsIndSamplesTableMain(         jaspResults, options, summaryStatsIndSamplesResults)
+  # .summaryStatsIndSamplesPriorPosteriorPlot(jaspResults, options, summaryStatsIndSamplesResults)
   # .summaryStatsIndSamplesRobustnessPlot(    jaspResults, options, summaryStatsIndSamplesResults)
   
   return()
@@ -39,24 +39,25 @@ SummaryStatsTTestBayesianIndependentSamples <- function(jaspResults, dataset = N
     return(jaspResults[["stateSummaryStatsIndSamplesResults"]]$object)
   
   # This will be the object that we fill with results
-  results        <- list(hypothesis_list          = list(),
-                         ttestTable               = list(),
-                         ttestPriorPosteriorPlot  = list(),
-                         ttestRobustnessPlot      = list())
+  results        <- list(hypothesisList          = list(),
+                         ttestTable              = list(),
+                         ttestPriorPosteriorPlot = list(),
+                         ttestRobustnessPlot     = list())
   
-  # extract hypothesis
-  hypothesis_list <- .hypothesisType.summarystats.ttest.independent(options$hypothesis)
-  hypothesis      <- hypothesis_list$hypothesis
+  # Extract hypothesis
+  hypothesisList <- .hypothesisType.summarystats.ttest.independent(hypothesis = options$hypothesis, bayesFactorType = options$bayesFactorType)
+  hypothesis      <- hypothesisList$hypothesis
   
-  # Conduct Bayesian independent samples t-test
+  # Conduct frequentist and Bayesian independent samples t-test
   ttestResults <- .generalSummaryTtestBF(options = options, paired = FALSE)
   BF10         <- ttestResults$bf
+  browser()
   BFlist       <- list(BF10    = BF10,
                        BF01    = 1/BF10,
                        LogBF10 = log(BF10))
   
   # Add results to results object
-  results[["hypothesis_list"]] <- hypothesis_list
+  results[["hypothesisList"]] <- hypothesisList
   results[["ttestTable"]] <- list(
     t        = options$tStatistic,
     n1       = options$n1Size,
@@ -69,7 +70,7 @@ SummaryStatsTTestBayesianIndependentSamples <- function(jaspResults, dataset = N
   # t        = options$tStatistic,
   # n1       = options$n1Size,
   # n2       = options$n2Size,
-  # oneSided = hypothesis_list[["oneSided"]],
+  # oneSided = hypothesisList[["oneSided"]],
   # BF       = BFlist[[options$bayesFactorType]],
   # BFH1H0   = BFlist[["BF10"]]
   # rscale   = ,
@@ -104,20 +105,19 @@ SummaryStatsTTestBayesianIndependentSamples <- function(jaspResults, dataset = N
   
   tableResults    <- summaryStatsIndSamplesResults[["ttestTable"]]
   
-  # extract important parameters that are dependent on the hypothesis selected
-  hypothesis_list <- summaryStatsIndSamplesResults[["hypothesis_list"]]
-  hypothesis      <- hypothesis_list$hypothesis
-  message         <- hypothesis_list$message
-  bf.title        <- .setBFtitle.summarystats(options$bayesFactorType, hypothesis)
+  # extract important parameters
+  hypothesisList <- summaryStatsIndSamplesResults[["hypothesisList"]]
+  hypothesis     <- hypothesisList$hypothesis
   
   # create table and state dependencies
   indSamplesTTestTable <- createJaspTable("Bayesian Independent Samples T-Test")
   indSamplesTTestTable$dependOn(optionsFromObject = jaspResults[["stateSummaryStatsIndSamplesResults"]])
   indSamplesTTestTable$position <- 1
   
-  # set footnote messages table citations  
-  if (!is.null(message)) indSamplesTTestTable$addFootnote(message)
+  # set title for different Bayes factor types
+  bfTitle        <- hypothesisList$bfTitle
   
+  # set table citations and footnote message for different hypothesis types
   if (options$effectSizeStandardized == "default") {
     
     indSamplesTTestTable$addCitation(.summaryStatsCitations[c("MoreyRounder2015", "RounderEtAl2009")])
@@ -128,61 +128,63 @@ SummaryStatsTTestBayesianIndependentSamples <- function(jaspResults, dataset = N
     
   }
   
+  message <- hypothesisList$message
+  if (!is.null(message)) indSamplesTTestTable$addFootnote(message)
+  
   indSamplesTTestTable$addColumnInfo(name = "t"        , title = "t"         , type = "number", format = "sf:4;dp:3")
   indSamplesTTestTable$addColumnInfo(name = "n1"       , title = "n\u2081"   , type = "number")
   indSamplesTTestTable$addColumnInfo(name = "n2"       , title = "n\u2082"   , type = "number")
-  indSamplesTTestTable$addColumnInfo(name = "BF"       , title = bf.title    , type = "number", format = "sf:4;dp:3")
+  indSamplesTTestTable$addColumnInfo(name = "BF"       , title = bfTitle     , type = "number", format = "sf:4;dp:3")
   indSamplesTTestTable$addColumnInfo(name = "error"    , title = "error %"   , type = "number", format = "sf:4;dp:3")
   indSamplesTTestTable$addColumnInfo(name = "pValue"   , title = "p"         , type = "number", format = "sf:4;dp:3")
   
   jaspResults[["indSamplesTTestTable"]] <- indSamplesTTestTable
   
-  # extract rows from summaryStatsBinomialResults
+  # extract rows from tableResults
   indSamplesTTestTable$addRows(tableResults)
 }
 
-# Prior and Posterior plot ----
-.summaryStatsIndSamplesPriorPosteriorPlot <- function(jaspResults, options, summaryStatsBinomialResults) {
-  
-  plotResults      <- summaryStatsIndSamplesResults[["ttestPriorPosteriorPlot"]]
-  hypothesis_list  <- summaryStatsIndSamplesResults[["hypothesis_list"]]
-  
-  # extract parameters needed for prior and posterior plot
-  
-  # Prior and posterior plot
-  if(options$plotPriorAndPosterior) {
-    
-      p <- .plotPriorPosterior(
-        t                      = plotResults$t,
-        n1                     = plotResults$n1,
-        n2                     = plotResults$n2,
-        paired                 = paired,
-        oneSided               = plotResults$oneSided,
-        BF                     = plotResults$BF,
-        BFH1H0                 = plotResults$BFH1H0,
-        rscale                 = rscale,
-        delta                  = delta,
-        addInformation         = options$plotPriorAndPosteriorAdditionalInfo,
-        wilcoxTest             = wilcoxTest,
-        options                = options,
-        ...
-      )
-    } 
-    
-    # create JASP object
-    plot <- createJaspPlot(
-      title       = "Prior and Posterior",
-      width       = 530,
-      height      = 400,
-      plot        = p,
-      aspectRatio = 0.7
-    )
-    plot$position <- 2
-    plot$dependOn(optionsFromObject = jaspResults[["stateSummaryStatsBinomialResults"]], 
-                  options           = c("plotPriorAndPosterior, plotPriorAndPosteriorAdditionalInfo"))
-    jaspResults[["priorPosteriorPlot"]] <- plot
-  }
-}
+# # Prior and Posterior plot ----
+# .summaryStatsIndSamplesPriorPosteriorPlot <- function(jaspResults, options, summaryStatsBinomialResults) {
+#   
+#   plotResults     <- summaryStatsIndSamplesResults[["ttestPriorPosteriorPlot"]]
+#   hypothesisList  <- summaryStatsIndSamplesResults[["hypothesisList"]]
+#   
+#   # extract parameters needed for prior and posterior plot
+#   
+#   # Prior and posterior plot
+#   if(options$plotPriorAndPosterior) {
+#     
+#       p <- .plotPriorPosterior(
+#         t                      = plotResults$t,
+#         n1                     = plotResults$n1,
+#         n2                     = plotResults$n2,
+#         paired                 = paired,
+#         oneSided               = plotResults$oneSided,
+#         BF                     = plotResults$BF,
+#         BFH1H0                 = plotResults$BFH1H0,
+#         rscale                 = rscale,
+#         delta                  = delta,
+#         addInformation         = options$plotPriorAndPosteriorAdditionalInfo,
+#         wilcoxTest             = wilcoxTest,
+#         options                = options,
+#         ...
+#       )
+#     } 
+#     
+#     # create JASP object
+#     plot <- createJaspPlot(
+#       title       = "Prior and Posterior",
+#       width       = 530,
+#       height      = 400,
+#       plot        = p,
+#       aspectRatio = 0.7
+#     )
+#     plot$position <- 2
+#     plot$dependOn(optionsFromObject = jaspResults[["stateSummaryStatsBinomialResults"]], 
+#                   options           = c("plotPriorAndPosterior, plotPriorAndPosteriorAdditionalInfo"))
+#     jaspResults[["priorPosteriorPlot"]] <- plot
+# }
 
 # # Robustness plot ----
 # .summaryStatsBinomialPlot <- function(jaspResults, options, summaryStatsBinomialResults) {
@@ -243,76 +245,38 @@ SummaryStatsTTestBayesianIndependentSamples <- function(jaspResults, dataset = N
 # }
 
 # helper functions
-.hypothesisType.summarystats.ttest.independent <- function(hypothesis) {
-  if (hypothesis == "groupsNotEqual") {
+.hypothesisType.summarystats.ttest.independent <- function(hypothesis_option, bayesFactorType) {
+  if (hypothesis_option == "groupsNotEqual") {
     
-    nullInterval <- c(-Inf, Inf)
     hypothesis   <- "twoSided"
     oneSided     <- FALSE
+    nullInterval <- c(-Inf, Inf)
     message      <- NULL
     
-  } else if (hypothesis == "groupOneGreater") {
+  } else if (hypothesis_option == "groupOneGreater") {
     
-    nullInterval <- c(0, Inf)
     hypothesis   <- "plusSided"
     oneSided     <- "right"
-    message      <- paste("For all tests, the alternative hypothesis specifies that group 1 is greater than group 2", sep = "")
+    nullInterval <- c(0, Inf)
+    message      <- "For all tests, the alternative hypothesis specifies that group 1 is greater than group 2."
     
-  } else if (hypothesis == "groupTwoGreater") {
+  } else if (hypothesis_option == "groupTwoGreater") {
     
-    nullInterval <- c(-Inf, 0)
     hypothesis   <- "minSided"
     oneSided     <- "left"
-    message      <- paste("For all tests, the alternative hypothesis specifies that group 1 is lesser than group 2", sep = "")
+    nullInterval <- c(-Inf, 0)
+    message      <- "For all tests, the alternative hypothesis specifies that group 1 is lesser than group 2."
+    
   }
   
-  return(list(nullInterval = nullInterval,
-              hypothesis   = hypothesis,
-              oneSided     = oneSided,
-              message      = message)
+  bfSubscripts <- .setBFsubscripts.summarystats(hypothesis)
+  bfTitle      <- .getBayesfactorTitle.summarystats(bayesFactorType, hypothesis)
+  
+  return(list(hypothesis    = hypothesis,
+              oneSided      = oneSided,
+              message       = message,
+              nullInterval  = nullInterval,
+              bfSubscripts  = bfSubscripts,
+              bfTitle       = bfTitle)
   )
 }
-.setBFtitle.summarystats <- function(bayesFactorType, hypothesis){
-  # set title for different Bayes factor types
-  if (bayesFactorType == "BF01") {
-    
-    if (hypothesis == "twoSided") 
-      bf.title <- "BF\u2080\u2081"
-    else if (hypothesis == "plusSided")
-      bf.title <- "BF\u2080\u208A"
-    else if (hypothesis == "minSided")
-      bf.title <- "BF\u2080\u208B"
-    
-  } else if (bayesFactorType == "BF10") {
-    
-    if (hypothesis == "twoSided")
-      bf.title <- "BF\u2081\u2080"
-    else if (hypothesis == "plusSided")
-      bf.title <- "BF\u208A\u2080"
-    else if (hypothesis == "minSided")
-      bf.title <- "BF\u208B\u2080"
-    
-  } else if (bayesFactorType == "LogBF10") {
-    
-    if (hypothesis == "twoSided")
-      bf.title <- "Log(\u0042\u0046\u2081\u2080)"
-    else if (hypothesis == "plusSided")
-      bf.title <-"Log(\u0042\u0046\u208A\u2080)"
-    else if (hypothesis == "minSided")
-      bf.title <- "Log(\u0042\u0046\u208B\u2080)"
-    
-  }
-  
-  return(bf.title)
-  
-}
-
-# citations for summary stats module
-.summaryStatsCitations <- c(
-  "MoreyRounder2015"  = "Morey, R. D., & Rouder, J. N. (2015). BayesFactor (Version 0.9.11-3)[Computer software].",
-  "RounderEtAl2009"   = "Rouder, J. N., Speckman, P. L., Sun, D., Morey, R. D., & Iverson, G. (2009). Bayesian t tests for accepting and rejecting the null hypothesis. Psychonomic Bulletin & Review, 16, 225–237.",
-  "GronauEtAl2017"    = "Gronau, Q. F., Ly, A., & Wagenmakers, E.-J. (2017). Informed Bayesian T-Tests. The American Statistician.",
-  "Jeffreys1961"      = "Jeffreys, H. (1961). Theory of Probability. Oxford, Oxford University Press.",
-  "OHaganForster2004" = "O'Hagan, A., & Forster, J. (2004). Kendall's advanced theory of statistics vol. 2B: Bayesian inference (2nd ed.). London: Arnold.",
-  "Haldane1932"       = "Haldane, J. B. S. (1932). A note on inverse probability. Mathematical Proceedings of the Cambridge Philosophical Society, 28, 55-61."
-)
