@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-.getBayesfactorTitle.summarystats.ttest <- function(bayesFactorType, hypothesis) {
+.getBayesfactorTitle.summarystats <- function(bayesFactorType, hypothesis) {
 	# returns the Bayes factor title to be shown on the table
 	#
 	# Args:
@@ -25,25 +25,17 @@
 	# Output:
 	#   A list containing:
 	#     bftitle: title of Bayes factor to be used in the output table
-	#     BFH1H0: true if BF10 or Log(BF10) is selected
 
 	hypothesisMap <- NULL
-	BFH1H0 <- TRUE
 
 	# map hypothesis type to a number
-	if (hypothesis == "groupsNotEqual" ||
-			hypothesis == "notEqualToTestValue" ||
-			hypothesis == "correlated") {
+	if (hypothesis == "twoSided") {
 
 		hypothesisMap <- 1
-	} else if (hypothesis == "groupOneGreater" ||
-			hypothesis == "greaterThanTestValue" ||
-			hypothesis == "correlatedPositively") {
+	} else if (hypothesis == "plusSided") {
 
 		hypothesisMap <- 2
-	} else if (hypothesis == "groupTwoGreater" ||
-			hypothesis == "lessThanTestValue" ||
-			hypothesis == "correlatedNegatively") {
+	} else if (hypothesis == "minSided") {
 
 		hypothesisMap <- 3
 	}
@@ -76,5 +68,33 @@
 								)
 	}
 
-	return(list(bftitle = bf.title, BFH1H0 = BFH1H0))
+	return(bf.title)
 }
+
+# set BF subscripts for Prior and Posterior plot
+.setBFsubscripts.summarystats <- function(hypothesis){
+  
+  if (hypothesis == "twoSided") {
+    
+    bf.subscripts <- "BF[1][0]"
+    
+  } else if (hypothesis == "plusSided") {
+    
+    bf.subscripts <- "BF['+'][0]"
+    
+  } else if (hypothesis == "minSided") {
+    
+    bf.subscripts <- "BF['-'][0]"
+  }
+  
+}
+
+# citations for summary stats module
+.summaryStatsCitations <- c(
+  "GronauEtAl2017"    = "Gronau, Q. F., Ly, A., & Wagenmakers, E.-J. (2017). Informed Bayesian T-Tests. The American Statistician.",
+  "Haldane1932"       = "Haldane, J. B. S. (1932). A note on inverse probability. Mathematical Proceedings of the Cambridge Philosophical Society, 28, 55-61.",
+  "Jeffreys1961"      = "Jeffreys, H. (1961). Theory of Probability. Oxford, Oxford University Press.",
+  "MoreyRounder2015"  = "Morey, R. D., & Rouder, J. N. (2015). BayesFactor (Version 0.9.11-3)[Computer software].",
+  "OHaganForster2004" = "O'Hagan, A., & Forster, J. (2004). Kendall's advanced theory of statistics vol. 2B: Bayesian inference (2nd ed.). London: Arnold.",
+  "RounderEtAl2009"   = "Rouder, J. N., Speckman, P. L., Sun, D., Morey, R. D., & Iverson, G. (2009). Bayesian t tests for accepting and rejecting the null hypothesis. Psychonomic Bulletin & Review, 16, 225–237."
+)
