@@ -37,7 +37,7 @@ SummaryStatsCorrelationBayesianPairs <- function(jaspResults, dataset = NULL, op
   # Take results from state if possible
   if (!is.null(jaspResults[["stateSummaryStatsCorrelationResults"]])) 
     return(jaspResults[["stateSummaryStatsCorrelationResults"]]$object)
-  browser()
+  
   # This will be the object that we fill with results
   results        <- list(hypothesisList                = list(),
                          correlationTable              = list(),
@@ -60,7 +60,7 @@ SummaryStatsCorrelationBayesianPairs <- function(jaspResults, dataset = NULL, op
   results[["hypothesisList"]] <- hypothesisList
   results[["correlationTable"]] <- list(
     n        = options$sampleSize,
-    corr     = correlationResults$r,
+    corr     = correlationResults$stat,
     BF       = BFlist[[options$bayesFactorType]],
     pValue   = correlationResults$pValue[[hypothesis]]
   )
