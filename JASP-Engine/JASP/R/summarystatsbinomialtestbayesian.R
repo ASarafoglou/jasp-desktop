@@ -20,39 +20,86 @@ SummaryStatsBinomialTestBayesian <- function(jaspResults, dataset = NULL, option
   # Reading in a datafile is not necessary
   # Error checking is not necessary
   
-  # Compute the results
+  # Compute the results and create main results table
   summaryStatsBinomialResults <- .summaryStatsBinomialComputeResults(jaspResults, options)
   
   # Output tables and plots
-  .summaryStatsBinomialTableMain(jaspResults, options, summaryStatsBinomialResults)
   .summaryStatsBinomialPlot(     jaspResults, options, summaryStatsBinomialResults)
   
   return()
 }
 
-# Results functions ----
+# Execute Bayesian binomial test ----
 .summaryStatsBinomialComputeResults <- function(jaspResults, options) {
   
+  # This function is the main workhorse, and also makes the table
+  if (is.null(jaspResults[["binomialContainer"]])) {
+    jaspResults[["binomialContainer"]] <- createJaspContainer()
+    jaspResults[["binomialContainer"]]$dependOn(c("successes", "failures", "betaPriorParamA", "betaPriorParamB", "testValue", "hypothesis"))
+  }
+  
   # Take results from state if possible
-  if (!is.null(jaspResults[["stateSummaryStatsBinomialResults"]])) 
-    return(jaspResults[["stateSummaryStatsBinomialResults"]]$object)
+  if (!jaspResults[["binomialContainer"]][["bayesianBinomialTable"]])
+    return(jaspResults[["binomialContainer"]][["stateSummaryStatsBinomialResults"]]$object)
   
-  # This will be the object that we fill with results
-  results        <- list(hypothesisList = list(),
-                         binomTable     = list(),
-                         binomPlot      = list())
+  # creates the empty table before executing the test
+  hypothesisList        <- .hypothesisType.summarystats.binomial(options$hypothesis, options$testValue, options$bayesFactorType)
+  jaspResults[["binomialContainer"]][["bayesianBinomialTable"]] <- .summaryStatsBinomialTableMain(jaspResults, options, hypothesisList)
+
+  if (!is.null(jaspResults[["binomialContainer"]][["stateSummaryStatsBinomialResults"]])) {
+    results <- jaspResults[["binomialContainer"]][["stateSummaryStatsBinomialResults"]]$object
+    # only change is BF type
+    results[["binomTable"]][["BF"]] <- results[["BFlist"]][[options$bayesFactorType]]
+  } else {
+    results <- computResults(hypothesisList, options)
+    # Save results to state
+    jaspResults[["binomialContainer"]][["stateSummaryStatsBinomialResults"]] <- createJaspState(results)
     
-  # Run the binomial test
-  a         <- options$betaPriorParamA
-  b         <- options$betaPriorParamB
-  successes <- options$successes
-  failures  <- options$failures
-  n         <- successes + failures
-  theta0    <- options$testValue
+    if (!is.null(results[["errorMessageTable"]]))
+      jaspResults[["binomialContainer"]]$setError(results[["errorMessageTable"]])
+  }
   
-  # Extract hypothesis
-  hypothesisList <- .hypothesisType.summarystats.binomial(hypothesis = options$hypothesis, theta0, bayesFactorType = options$bayesFactorType)
-  hypothesis      <- hypothesisList$hypothesis
+  #  fill table if ready
+  if (results[["ready"]])
+    jaspResults[["bayesianBinomialTable"]]$setData(results[["binomTable"]])
+
+  return(results)
+
+}
+
+computResults <- function(hypothesisList, options) {
+  
+  # Extract important information from options list
+  hypothesis <- hypothesisList$hypothesis
+  a          <- options$betaPriorParamA
+  b          <- options$betaPriorParamB
+  successes  <- options$successes
+  failures   <- options$failures
+  n          <- successes + failures
+  theta0     <- options$testValue
+  
+  # Checks before executing the analysis
+  # 1. check user input
+  ready <- !(n == 0)
+  
+  # 2. check for possible errors
+  errorMessageTable <- NULL
+  
+  if (theta0 == 1 && hypothesis == "greater") {
+    
+    errorMessageTable <- "Cannot test the hypothesis that the test value is greater than 1."
+    
+  } else if (theta0 == 0 && hypothesis == "less") {
+    
+    errorMessageTable <- "Cannot test the hypothesis that the test value is less than 0."
+  }
+  
+  if (!is.null(errorMessageTable)) {
+    return(list(ready = ready, errorMessageTable = errorMessageTable))
+  }
+  if (!ready)
+    return(list(ready = ready))
+  
   
   # Conduct frequentist and Bayesian binomial test
   pValue <- stats::binom.test(x = successes, n = n, p = theta0, alternative = hypothesis)$p.value
@@ -62,16 +109,17 @@ SummaryStatsBinomialTestBayesian <- function(jaspResults, dataset = NULL, option
                  BF01    = 1/BF10,
                  LogBF10 = log(BF10))
   
-  # Add results to results object
-  results[["hypothesisList"]] <- hypothesisList
-  results[["binomTable"]] <- list(
+  # add rows to the main table
+  binomTable <- list(
     successes = successes,
     failures  = failures,
     theta0    = theta0,
     BF        = BFlist[[options$bayesFactorType]],
     pValue    = pValue
   )
-  results[["binomPlot"]] <- list(
+  
+  # Add results to results object
+  binomPlot <- list(
     a         = a,
     b         = b,
     successes = successes,
@@ -79,30 +127,26 @@ SummaryStatsBinomialTestBayesian <- function(jaspResults, dataset = NULL, option
     theta0    = theta0,
     BF        = BFlist
   )
-  
-  # Save results to state
-  defaultOptions <- c("successes", "failures", "betaPriorParamA", "betaPriorParamB", "testValue", "hypothesis", "bayesFactorType")
-  jaspResults[["stateSummaryStatsBinomialResults"]] <- createJaspState(results)
-  jaspResults[["stateSummaryStatsBinomialResults"]]$dependOn(defaultOptions)
+  # This will be the object that we fill with results
+  results        <- list(
+    hypothesisList = hypothesisList,
+    binomPlot      = binomPlot,
+    binomTable     = binomTable
+  )
+  results[["ready"]] <- ready
+  results[["BFlist"]] <- BFlist
   
   # Return results object
   return(results)
 }
 
+
 # Main table ----
-.summaryStatsBinomialTableMain <- function(jaspResults, options, summaryStatsBinomialResults){
-  if (!is.null(jaspResults[["bayesianBinomialTable"]])) return()
-  
-  tableResults <- summaryStatsBinomialResults[["binomTable"]]
-  
-  # extract important parameters
-  theta0         <- tableResults$theta0
-  hypothesisList <- summaryStatsBinomialResults[["hypothesisList"]]
-  hypothesis     <- hypothesisList$hypothesis
+.summaryStatsBinomialTableMain <- function(options, hypothesisList){
   
   # create table and state dependencies
   bayesianBinomialTable <- createJaspTable("Bayesian Binomial Test")
-  bayesianBinomialTable$dependOn(optionsFromObject = jaspResults[["stateSummaryStatsBinomialResults"]])
+  bayesianBinomialTable$dependOn("bayesFactorType")
   bayesianBinomialTable$position <- 1
   
   # set title for different Bayes factor types
@@ -116,33 +160,33 @@ SummaryStatsBinomialTestBayesian <- function(jaspResults, dataset = NULL, option
   
   bayesianBinomialTable$addColumnInfo(name = "successes", title = "Successes" , type = "integer")
   bayesianBinomialTable$addColumnInfo(name = "failures" , title = "Failures"  , type = "integer")
-  bayesianBinomialTable$addColumnInfo(name = "theta0"   , title = "Test value", type = "number", format = "sf:4;dp:3")
-  bayesianBinomialTable$addColumnInfo(name = "BF"       , title = bfTitle     , type = "number", format = "sf:4;dp:3")
-  bayesianBinomialTable$addColumnInfo(name = "pValue"   , title = "p"         , type = "number", format = "sf:4;dp:3")
+  bayesianBinomialTable$addColumnInfo(name = "theta0"   , title = "Test value", type = "number")
+  bayesianBinomialTable$addColumnInfo(name = "BF"       , title = bfTitle     , type = "number")
+  bayesianBinomialTable$addColumnInfo(name = "pValue"   , title = "p"         , type = "number")
   
-  errorMessageTable <- NULL
-  
-  if (theta0 == 1 && hypothesis == "greater") {
-    
-    errorMessageTable <- "Cannot test the hypothesis that the test value is greater than 1."
-    
-  } else if (theta0 == 0 && hypothesis == "less") {
-    
-    errorMessageTable <- "Cannot test the hypothesis that the test value is less than 0."
-  }
-  
-  jaspResults[["bayesianBinomialTable"]] <- bayesianBinomialTable
-  
-  if (!is.null(errorMessageTable))
-    .quitAnalysis(errorMessageTable)
-  
-  # extract rows from tableResults
-  bayesianBinomialTable$addRows(tableResults)
+  return(bayesianBinomialTable)
+
 }
 
 # Prior and Posterior plot ----
 .summaryStatsBinomialPlot <- function(jaspResults, options, summaryStatsBinomialResults) {
   
+  if (!options$plotPriorAndPosterior)
+    return()
+  
+  plot <- createJaspPlot(
+    title       = "Prior and Posterior",
+    width       = 530,
+    height      = 400,
+    aspectRatio = 0.7
+  )
+  plot$position <- 2
+  plot$dependOn(options = c("plotPriorAndPosterior, plotPriorAndPosteriorAdditionalInfo"))
+  jaspResults[["binomialContainer"]][["priorPosteriorPlot"]] <- plot
+  
+  if (!summaryStatsBinomialResults[["ready"]] || jaspResults[["binomialContainer"]]$getError())
+    return()
+
   plotResults    <- summaryStatsBinomialResults[["binomPlot"]]
   hypothesisList <- summaryStatsBinomialResults[["hypothesisList"]]
   hypothesis     <- hypothesisList$hypothesis
@@ -157,7 +201,6 @@ SummaryStatsBinomialTestBayesian <- function(jaspResults, dataset = NULL, option
   BF10      <- plotResults$BF[["BF10"]]
   
   # Prior and posterior plot
-  if(options$plotPriorAndPosterior) {
     quantiles       <- .credibleIntervalPlusMedian(credibleIntervalInterval = .95, a, b, successes, n, hyp = hypothesis, theta0 = theta0)
     medianPosterior <- quantiles$ci.median
     CIlower         <- quantiles$ci.lower
@@ -176,18 +219,8 @@ SummaryStatsBinomialTestBayesian <- function(jaspResults, dataset = NULL, option
     }
     
     # create JASP object
-    plot <- createJaspPlot(
-      title       = "Prior and Posterior",
-      width       = 530,
-      height      = 400,
-      plot        = p,
-      aspectRatio = 0.7
-    )
-    plot$position <- 2
-    plot$dependOn(optionsFromObject = jaspResults[["stateSummaryStatsBinomialResults"]], 
-                  options           = c("plotPriorAndPosterior, plotPriorAndPosteriorAdditionalInfo"))
-    jaspResults[["priorPosteriorPlot"]] <- plot
-  }
+    plot$plotObject <- p
+    return()
 }
 
 # helper functions
